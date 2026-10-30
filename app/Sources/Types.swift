@@ -32,7 +32,7 @@ struct Status: Decodable, Equatable {
     /// the adaptive strategy: sites that found their own trick on its ladder
     var ladder = 0
     /// YouTube video over QUIC; off — over TCP, which the adaptive strategy tunes (zapret.sh video)
-    var videoQuic = false
+    var videoQuic = true
 
     init() {}
 

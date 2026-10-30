@@ -4,6 +4,8 @@
 
 - **Smart mode knows blocked sites in advance.** The community's list is refreshed on the Mac every day — such
   sites open from the first visit, and the engine notices new blocks at the second failure
+- **YouTube video goes over QUIC, as the browser picks.** "YouTube video over TCP" is now off by default: turn
+  it on if 4K stutters
 - **An upload check.** The provider may freeze uploads to foreign sites the bypass hides along with the blocked
   ones — after ~16 KB. Checks notice it and say what to do
 - **Telegram works again where the provider closed its addresses.** A recent macOS sends a big TLS hello, and

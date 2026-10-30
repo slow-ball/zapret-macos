@@ -114,15 +114,15 @@ cmd_scope()
 	if running; then cmd_start; fi
 }
 
-# the adaptive strategy: YouTube video over TCP (default) or QUIC. the speed of QUIC can't be measured (curl
-# of macOS has none), over TCP the ladder measures and tunes it: QUIC to the video servers is dropped, the
-# browser falls back to TCP at once
-video_quic() { [ -f "$RT/video-quic" ]; }
+# the adaptive strategy: YouTube video over QUIC, as the browser picks (the default), or over TCP. the speed of
+# QUIC can't be measured (curl of macOS has none); over TCP the ladder measures and tunes it: QUIC to the video
+# servers is dropped, the browser falls back to TCP at once
+video_quic() { [ ! -f "$RT/video-tcp" ]; }
 cmd_video()
 {
 	case "$1" in
-		tcp) need_root video "$@"; rm -f "$RT/video-quic" ;;
-		quic) need_root video "$@"; mkdir -p "$RT"; touch "$RT/video-quic" ;;
+		tcp) need_root video "$@"; mkdir -p "$RT"; touch "$RT/video-tcp" ;;
+		quic) need_root video "$@"; rm -f "$RT/video-tcp" ;;
 		status | "") if video_quic; then say "видео YouTube: QUIC"; else say "видео YouTube: TCP"; fi; return 0 ;;
 		*) die "video: tcp или quic" ;;
 	esac

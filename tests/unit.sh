@@ -229,16 +229,17 @@ check "частые сайты: по убыванию, без YouTube, Discord �
 check "частые сайты: не больше заданного" eq "$(busy_sites 1)" b.com
 : > "$LADDER_SEEN"
 # YouTube video over TCP: QUIC of its servers dropped, first in the adaptive config
-rm -f "$RT/video-quic"
+touch "$RT/video-tcp"
 nfqws_conf "Адаптивная" "$c"
 check "видео по TCP: QUIC видеосерверов отбрасывается" eq "$(grep -n -- '^--drop$' "$c" | cut -d: -f1)/$(grep -c -- '^--hostlist-domains=googlevideo.com$' "$c")" "3/1"
 check "адаптивная: учёт сайтов" has "$(cat "$c")" "--ladder-seen="
-touch "$RT/video-quic"
+rm -f "$RT/video-tcp"
 nfqws_conf "Адаптивная" "$c"
-check "видео по QUIC: ничего не отбрасывается" eq "$(grep -c -- '^--drop$' "$c")" 0
-rm -f "$RT/video-quic"
+check "видео по QUIC по умолчанию: ничего не отбрасывается" eq "$(grep -c -- '^--drop$' "$c")" 0
+touch "$RT/video-tcp"
 nfqws_conf "macos (ALT5)" "$c"
 check "своя стратегия: QUIC не трогается" eq "$(grep -c -- '^--drop$' "$c")" 0
+rm -f "$RT/video-tcp"
 # the generator: a new trick changes one thing of the old one and is a valid line of options
 for i in 1 2 3 4 5 6 7 8; do
 	m=$(trick_mutate "--dpi-desync=fake,multisplit --dpi-desync-split-pos=1 --dpi-desync-fooling=ts --dpi-desync-repeats=6 --dpi-desync-fake-tls=@BASE@/bin/tls_clienthello_www_google_com.bin")
