@@ -12,6 +12,8 @@ export ZAPRET_LIB_ONLY=1 ZAPRET_TEST_RT="$TMP/rt"
 # shellcheck source=src/zapret.sh
 . "$ROOT/src/zapret.sh"
 PROJECT="$TMP/project"
+# the background search marks itself in /var/run: here in the temporary folder
+LEARN_BG="$TMP/learn.pid"
 LOG="$TMP/log"
 chown() { :; }
 install_sudoers() { :; }
