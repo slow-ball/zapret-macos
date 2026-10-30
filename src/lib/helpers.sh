@@ -96,8 +96,10 @@ autostart_on()  { ! launchctl print-disabled system 2>/dev/null | grep -qE "\"$N
 watchdog_on()   { [ -f "$RT/autofix" ]; }
 autoupdate_on() { [ -f "$RT/autoupdate" ]; }
 app_installed() { [ -d /Applications/zapret.app ]; }
-# which sites are processed: all, smart (lists + found blocked ones) or lists
-scope()         { local s; s=$(cat "$RT/scope" 2>/dev/null); echo "${s:-all}"; }
+# which sites are processed: smart (the default: the lists, sites known to be blocked and the ones found
+# blocked), all, or lists. "all" gives every site a trick, and the provider freezes uploads to foreign hosting
+# it can't name after ~16 KB: only for those who want it
+scope()         { local s; s=$(cat "$RT/scope" 2>/dev/null); echo "${s:-smart}"; }
 scope_name()    { case "$(scope)" in all) msg "все" ;; smart) msg "умный" ;; *) msg "по спискам" ;; esac; }
 # game filter of the Windows version: nfqws also handles ports 1024-65535 of game servers. off, tcp, udp or all
 game_mode()     { local g; g=$(cat "$RT/game" 2>/dev/null); echo "${g:-off}"; }
@@ -224,6 +226,7 @@ write_lists()
 	# the Telegram proxy's relays on Cloudflare aren't blocked: a trick on them only hides their name, and the
 	# provider freezes a connection to foreign hosting it can't name after its first ~16 KB
 	[ -x "$TG_BIN" ] && "$TG_BIN" relays >> "$l/list-exclude.txt" 2>/dev/null
+	cat "$BLOCKED" > "$l/list-blocked.txt" 2>/dev/null || : > "$l/list-blocked.txt"
 	user_cat "$PROJECT/lists/list-user.txt" > "$l/list-general-user.txt"
 	user_cat "$PROJECT/lists/list-exclude-user.txt" > "$l/list-exclude-user.txt"
 	: > "$l/ipset-exclude-user.txt"

@@ -8,6 +8,7 @@ cmd_install()
 	xattr -dr com.apple.quarantine "$PROJECT" 2>/dev/null
 	sync_runtime
 	nfqws_install || die "Не удалось установить движок nfqws"
+	blocked_update --force
 	ok "zapret установлен в %s" "$RT"
 	cmd_start "$DEFAULT_STRATEGY" || exit 1
 	set_autostart on
@@ -97,16 +98,16 @@ cmd_scope()
 	need_root scope "$@"
 	local s=$1 c
 	if [ -z "$s" ]; then
-		say "  1) Все сайты, кроме исключений"
-		say "  2) Умный: YouTube, Discord, свои списки и сайты, которые не открылись без обхода"
+		say "  1) Умный: YouTube, Discord, свои списки, заблокированные сайты и те, что не открылись без обхода"
+		say "  2) Все сайты, кроме исключений (загрузки на зарубежные сайты могут зависать)"
 		say "  3) Только YouTube, Discord и свои списки"
 		read -r -p "$(msg "Номер: ")" c
-		case "$c" in 1) s=all ;; 2) s=smart ;; 3) s=lists ;; *) return 0 ;; esac
+		case "$c" in 1) s=smart ;; 2) s=all ;; 3) s=lists ;; *) return 0 ;; esac
 	fi
 	case "$s" in
-		all)   rm -f "$RT/scope"; ok "zapret обрабатывает все сайты (кроме исключений)" ;;
-		smart) mkdir -p "$RT"; echo smart > "$RT/scope"
-		       ok "умный режим: сайт, который дважды не открылся, сам попадает в обработку" ;;
+		smart) rm -f "$RT/scope"
+		       ok "умный режим: заблокированные сайты и те, что не открылись, — с обходом, остальные как есть" ;;
+		all)   mkdir -p "$RT"; echo all > "$RT/scope"; ok "zapret обрабатывает все сайты (кроме исключений)" ;;
 		lists) mkdir -p "$RT"; echo lists > "$RT/scope"; ok "zapret обрабатывает только YouTube, Discord и свои списки" ;;
 		*)     die "scope: all, smart или lists" ;;
 	esac

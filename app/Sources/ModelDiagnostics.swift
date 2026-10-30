@@ -23,6 +23,7 @@ extension AppModel {
         case "check": L("Подобрать стратегию")
         case "update": L("Обновить")
         case "telegram": L("Перезапустить прокси")
+        case "smart": L("Включить умный режим")
         case "dns": L("Поставить DNS 1.1.1.1")
         case "proxy-settings": L("Настройки сети")
         case "monitor": L("Мониторинг системы")
@@ -46,6 +47,7 @@ extension AppModel {
         case "update": await update(); return
         case "telegram": await privileged(["telegram", "restart"], success: L("Прокси для Telegram перезапущен"))
         case "dns": await privileged(["dns"], success: L("DNS изменён"))
+        case "smart": await privileged(["scope", "smart"], success: L("Включён умный режим"))
         case "proxy-settings": ws.open(URL(string: "x-apple.systempreferences:com.apple.Network-Settings.extension")!); return
         case "monitor":
             if let app = ws.urlForApplication(withBundleIdentifier: "com.apple.ActivityMonitor") {

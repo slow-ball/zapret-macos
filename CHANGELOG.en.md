@@ -2,6 +2,11 @@
 
 ## 1.0.1
 
+- **It works everywhere and breaks no sites.** Smart mode is now the default: YouTube, Discord, Telegram, your
+  sites, the blocked sites of the community's list (refreshed on the Mac every day) and the ones that didn't
+  open get a bypass — the engine now notices those at the second failure. The rest of the internet goes as it
+  is. A bypass on every site hid sites that aren't blocked too, and the provider froze uploads to foreign sites
+  after ~16 KB: files and forms didn't go. Checks look at that now too
 - **Telegram works again where the provider closed its addresses.** A recent macOS sends a big TLS hello, and
   some providers break such connections to Cloudflare — the proxy couldn't reach the relays. Now it talks to
   them in a way that gets through; Telegram's own encryption inside is unchanged

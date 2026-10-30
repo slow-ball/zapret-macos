@@ -19,6 +19,26 @@ site_ok()
 # for that site in front of the running strategy, and the service reads it on the fly, so the rest of
 # the internet keeps working. a stopped zapret is tested in a test engine of its own. either way the
 # setup comes back when the tests end, even if they are interrupted
+# the sites known to be blocked in Russia: the community's list (itdoginfo/allow-domains), fetched on this Mac
+# once a day and never kept in the project. smart mode gives them a trick from the first visit; the exclusions
+# still win. a list that is cut short or isn't one leaves the last good one. true when it changed; --force: now
+blocked_update()
+{
+	local tmp changed=1
+	[ "$1" != --force ] && [ -n "$(find "$BLOCKED" -mtime -1 2>/dev/null)" ] && return 1
+	tmp=$(mktemp)
+	if curl -fsSL -m 20 -o "$tmp" "$BLOCKED_URL"; then
+		# a name a line; ".ua" stands for the whole zone
+		tr '[:upper:]' '[:lower:]' < "$tmp" | sed 's/^\.//' | grep -xE '[a-z0-9-]+(\.[a-z0-9-]+)*' | sort -u > "$tmp.ok"
+		if [ "$(grep -c . "$tmp.ok")" -ge 200 ]; then
+			cmp -s "$tmp.ok" "$BLOCKED" || { cat "$tmp.ok" > "$BLOCKED"; changed=0; }
+			touch "$BLOCKED"
+		fi
+	fi
+	rm -f "$tmp" "$tmp.ok"
+	return $changed
+}
+
 tests_live() { running && [ -f "$NQ_READY" ] && launchctl print system/$NQ_LABEL >/dev/null 2>&1; }
 
 tests_begin()

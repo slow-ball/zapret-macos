@@ -85,7 +85,8 @@ start_engine()
 	local inbound=0
 	# the answers of servers: smart mode learns blocked sites from them, the ladder of the adaptive strategy
 	# moves sites by them
-	if [ "$ZAPRET_NO_V6" != 1 ] && { [ "$(cat "$RT/scope" 2>/dev/null)" = smart ] || grep -q -- '^--ladder=' "$CONF"; }; then
+	scope=$(cat "$RT/scope" 2>/dev/null)
+	if [ "$ZAPRET_NO_V6" != 1 ] && { [ "${scope:-smart}" = smart ] || grep -q -- '^--ladder=' "$CONF"; }; then
 		inbound=1
 	fi
 	# @file is read only when it is the first argument; what the engine says goes to the log

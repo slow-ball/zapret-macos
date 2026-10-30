@@ -7,8 +7,9 @@ struct SitesPage: View {
         VStack(alignment: .leading, spacing: 24) {
             PageHeader(title: "Сайты", subtitle: "Какие сайты обрабатывает zapret и что делать, если какой-то не открывается.")
             HStack(spacing: 12) {
-                ScopeCard(value: "all", symbol: "globe", title: "Все сайты", text: "Всё, кроме исключений")
-                ScopeCard(value: "smart", symbol: "sparkle.magnifyingglass", title: "Умный", text: "Только то, что не открывается без обхода")
+                ScopeCard(
+                    value: "smart", symbol: "sparkle.magnifyingglass", title: "Умный", text: "Заблокированные и те, что не открылись — остальное как есть")
+                ScopeCard(value: "all", symbol: "globe", title: "Все сайты", text: "Всё, кроме исключений. Загрузки на зарубежные сайты могут зависать")
                 ScopeCard(value: "lists", symbol: "list.bullet", title: "По спискам", text: "YouTube, Discord и свои сайты")
             }
             .fixedSize(horizontal: false, vertical: true)

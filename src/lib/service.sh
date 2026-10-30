@@ -350,12 +350,25 @@ auto_ladder_tune()
 	return 0
 }
 
+# once a day in "all sites" mode: uploads that freeze are told, with what fixes them (upload_ok)
+auto_upload_check()
+{
+	[ "$(scope)" = all ] && running || return 0
+	[ -n "$(find "$RT/upload-checked" -mtime -1 2>/dev/null)" ] && return 0
+	touch "$RT/upload-checked"
+	upload_ok && return 0
+	log "$(msg "watchdog: загрузки на зарубежные сайты зависают в режиме «Все сайты»")"
+	notify "$(msg "Загрузки на некоторые сайты зависают в режиме «Все сайты» — умный режим это исправит")"
+}
+
 # called by launchd as root every 5 minutes
 watchdog_run()
 {
 	local fails new
 	auto_why_trim
 	auto_pack
+	# a fresh list of blocked sites goes into the running engine
+	if blocked_update && running && [ "$(scope)" = smart ]; then write_lists; nfqws_reload >/dev/null; fi
 	# a macOS update may have reset what zapret set up
 	[ "$(os_build)" = "$(cat "$RT/os-build" 2>/dev/null)" ] || cmd_repair --quiet
 	# the project folder belongs to the user: update only while someone is logged in
@@ -376,6 +389,7 @@ watchdog_run()
 		auto_ladder_speed
 		auto_ladder_tune
 		auto_ladder_evolve
+		auto_upload_check
 		return 0
 	fi
 	# no internet at all is not our problem

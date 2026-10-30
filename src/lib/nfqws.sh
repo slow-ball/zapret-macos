@@ -252,10 +252,10 @@ nfqws_conf()
 	is_windows "$1" || { opts=$(strategy_opts "$1"); [ -n "$opts" ] || return 1; }
 	case "$(scope)" in
 		all) ipset=$RT/lists/ipset-any.txt ;;
-		# the profiles of the user's list also learn blocked sites: from resets and redirects in the
-		# servers' answers (ZAPRET_INBOUND, run.sh) and from requests nobody answers. the engine says
-		# which of them it was in list-auto-why.log (found_why)
-		smart) auto="--hostlist-auto=\"@LISTS@/list-auto.txt\" --hostlist-auto-debug=\"@LISTS@/list-auto-why.log\"" ;;
+		# the profiles of the user's list also take the sites known to be blocked (blocked_update), and learn
+		# new ones: from resets and redirects in the servers' answers (ZAPRET_INBOUND, run.sh) and from
+		# requests nobody answers, at the second failure. the engine says which it was in list-auto-why.log
+		smart) auto="--hostlist=\"@LISTS@/list-blocked.txt\" --hostlist-auto=\"@LISTS@/list-auto.txt\" --hostlist-auto-fail-threshold=2 --hostlist-auto-debug=\"@LISTS@/list-auto-why.log\"" ;;
 	esac
 	local g k s so n=0 f
 	g=$(game_mode)

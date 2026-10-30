@@ -252,7 +252,7 @@ jobs:
 
       - name: reset to how zapret starts out
         run: |
-          sudo "$Z" scope smart
+          sudo "$Z" scope all
           sudo "$Z" game all
           sudo "$Z" reset
           test "$(cat /opt/zapret-macos/current)" = "Адаптивная"

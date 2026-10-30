@@ -4,6 +4,19 @@
 # with diag --tags: a fix for the line above, as a button in the app (see fixes in Model.swift)
 hint() { [ "$DIAG_TAGS" = 1 ] && echo "    @fix $1"; return 0; }
 
+# a big upload to a site that isn't blocked, through the running engine (as nobody, like any app): the provider
+# freezes a connection to foreign hosting it can't name after its first ~16 KB — what a trick on every site does
+upload_ok()
+{
+	local f code
+	f=$(mktemp /tmp/zapret-upload.XXXXXX)
+	head -c 262144 /dev/urandom > "$f"
+	chmod 644 "$f"
+	code=$(sudo -u nobody curl -s -o /dev/null -m 10 -X POST --data-binary @"$f" -w '%{http_code}' https://speed.cloudflare.com/__up)
+	rm -f "$f"
+	[ "$code" = 200 ]
+}
+
 cmd_diag()
 {
 	need_root diag "$@"
@@ -49,6 +62,15 @@ cmd_diag()
 		warn "в системе настроен прокси — трафик может идти мимо zapret"; hint proxy-settings
 	else
 		ok "системный прокси не настроен"
+	fi
+	if running && ! vpn_active; then
+		if upload_ok; then
+			ok "большие загрузки на зарубежные сайты проходят"
+		elif [ "$(scope)" = all ]; then
+			bad "загрузки на зарубежные сайты зависают: режим «Все сайты» прячет и незаблокированные сайты"; hint smart
+		else
+			bad "загрузки на зарубежные сайты зависают"
+		fi
 	fi
 	for p in spoofdpi ciadpi byedpi goodbyedpi warp-svc sing-box xray v2ray mihomo clash hiddify nekoray; do
 		pgrep -qix "$p" && { warn "запущен %s — может конфликтовать с zapret" "$p"; hint monitor; }

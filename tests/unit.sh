@@ -63,6 +63,26 @@ echo smart > "$RT/scope"
 nfqws_conf "nfqws general (ALT13)" "$c"
 check "умный: автосписок" has "$(cat "$c")" "--hostlist-auto="
 check "умный: ipset-none" has "$(cat "$c")" "ipset-none.txt"
+check "умный: известные заблокированные" has "$(cat "$c")" 'list-blocked.txt'
+check "умный: со второго сбоя" has "$(cat "$c")" "--hostlist-auto-fail-threshold=2"
+rm -f "$RT/scope"
+check "по умолчанию — умный" eq "$(scope)" smart
+# the list of blocked sites: names only, a zone without its dot, a short or broken list leaves the last one
+curl() { local o; while [ $# -gt 0 ]; do [ "$1" = -o ] && o=$2; shift; done; cat "$TMP/blocked-src" > "$o"; }
+{ printf '.ua\nExample.COM\nbad name\n# comment\n'; for i in $(seq 250); do echo "site$i.example"; done; } > "$TMP/blocked-src"
+rm -f "$BLOCKED"
+check "заблокированные: новый список" blocked_update --force
+check "заблокированные: зона без точки" eval 'grep -qx ua "$BLOCKED"'
+check "заблокированные: строчными" eval 'grep -qx example.com "$BLOCKED"'
+check "заблокированные: мусор отброшен" eval '! grep -q " " "$BLOCKED"'
+check "заблокированные: тот же — не новый" eval '! blocked_update --force'
+check "заблокированные: раз в сутки" eval '! blocked_update'
+printf 'a.example\n' > "$TMP/blocked-src"
+blocked_update --force
+check "заблокированные: короткий список не принят" eq "$(grep -c . "$BLOCKED")" 252
+write_lists
+check "заблокированные: в списках движка" eval 'grep -qx example.com "$RT/lists/list-blocked.txt"'
+unset -f curl
 echo all > "$RT/scope"; echo all > "$RT/game"
 nfqws_conf "nfqws general (ALT13)" "$c"
 check "игры TCP и UDP" eq "$(grep -c -- '"1024-65535"' "$c")" 2
