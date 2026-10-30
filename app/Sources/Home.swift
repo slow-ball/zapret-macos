@@ -134,17 +134,22 @@ struct HomePage: View {
 
     private var telegramCard: some View {
         let s = model.status
-        let state: Health.State = !s.telegram ? .unknown : s.telegramRunning ? .ok(nil) : .fail
-        let connected = s.telegramRunning && s.telegramConnected
+        let stuck = s.telegramRunning && !s.telegramReachable
+        let state: Health.State = !s.telegram ? .unknown : s.telegramRunning && !stuck ? .ok(nil) : .fail
+        let connected = s.telegramRunning && s.telegramConnected && !stuck
         var button: (LocalizedStringKey, () -> Void)?
-        if !connected { button = (s.telegramRunning ? "Подключить" : "Включить", { Task { await model.connectTelegramFully() } }) }
+        if stuck {
+            button = ("Исправить", { Task { await model.restartTelegram() } })
+        } else if !connected {
+            button = (s.telegramRunning ? "Подключить" : "Включить", { Task { await model.connectTelegramFully() } })
+        }
         return ServiceCard(
             name: "Telegram", symbol: "paperplane.fill", tint: Theme.telegram, state: state,
             detail: !s.telegram
                 ? L("прокси выключен")
                 : !s.telegramRunning
                     ? L("прокси не запущен")
-                    : L("прокси работает"),
+                    : stuck ? L("Telegram не отвечает") : L("прокси работает"),
             button: button, done: connected ? "Подключено" : nil,
             busy: model.telegramBusy, tap: { telegramSheet = true })
     }
@@ -355,12 +360,19 @@ struct TelegramSheet: View {
             if s.telegram {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        StatusDot(state: s.telegramRunning ? .ok(nil) : .fail)
-                        Text(!s.telegramRunning ? "Прокси не запущен" : s.telegramConnected ? "Прокси работает, Telegram подключён" : "Прокси работает")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        StatusDot(state: s.telegramRunning && s.telegramReachable ? .ok(nil) : .fail)
+                        Text(
+                            !s.telegramRunning
+                                ? "Прокси не запущен"
+                                : !s.telegramReachable
+                                    ? "Прокси работает, но не достаёт до Telegram"
+                                    : s.telegramConnected ? "Прокси работает, Telegram подключён" : "Прокси работает"
+                        )
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
                         Spacer()
-                        if !s.telegramRunning {
-                            Button("Перезапустить") { Task { await model.setTelegram(true) } }.buttonStyle(PillButtonStyle(tint: Theme.warn))
+                        if !s.telegramRunning || !s.telegramReachable {
+                            Button("Перезапустить") { Task { await s.telegramRunning ? model.restartTelegram() : model.setTelegram(true) } }
+                                .buttonStyle(PillButtonStyle(tint: Theme.warn))
                         }
                     }
                     HStack(spacing: 10) {

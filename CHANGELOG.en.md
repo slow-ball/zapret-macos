@@ -5,6 +5,14 @@
 - **Telegram works again where the provider closed its addresses.** A recent macOS sends a big TLS hello, and
   some providers break such connections to Cloudflare — the proxy couldn't reach the relays. Now it talks to
   them in a way that gets through; Telegram's own encryption inside is unchanged
+- **An honest Telegram status.** The proxy notes whether it reaches Telegram. When it doesn't, the app says so
+  and offers Fix, autofix refreshes the relays and restarts the proxy, and Checks shows which ways are closed:
+  Telegram's addresses, the relays, the data center
+- **Telegram connects at once.** The proxy remembers the way it reached Telegram — after sleep, a new network or
+  an update it goes that way right away, without waiting on closed addresses
+- **A quick start of the adaptive strategy.** Right after an install, a reset or switching to the adaptive
+  strategy, YouTube and Discord get a working trick within a minute — no waiting until the engine has seen
+  enough failures
 
 ## 1.0.0
 

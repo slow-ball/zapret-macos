@@ -7,9 +7,11 @@
 // data centers, over the community's WebSocket relays on Cloudflare; straight to the data center last. The
 // protocol is the one of Flowseal's tg-ws-proxy (MIT), written anew.
 //
-//   zapret-tg serve <port> <secret: 32 hex>         the proxy on 127.0.0.1
+//   zapret-tg serve <port> <secret: 32 hex> [state] the proxy on 127.0.0.1; what it learned goes to the file
+//                                                   state (see State) and is read back on start
 //   zapret-tg check <host> <port> <secret> [dc]     a handshake like Telegram Desktop's and the first request of
 //                                                   authorization through the proxy: OK if Telegram answered
+//   zapret-tg paths [dc]                            every way to Telegram, which of them answer
 //   zapret-tg stun                                  a STUN request like Discord voice's: OK if it is answered
 
 import CommonCrypto
@@ -343,6 +345,58 @@ var goodRelay: [Int: String] = [:]
 var relayDown: [String: Date] = [:]
 /// direct ways to Telegram didn't answer: for ten minutes the relays go first, no waiting on what is blocked
 var directDown: Date?
+
+/// What the proxy learned, kept across restarts (sleep, a new network, an update): the relay that works for each
+/// data center and since when the direct way is closed — so the first connection goes the right way at once —
+/// and when Telegram last answered and last didn't: Telegram Desktop may be connected to a proxy that can't
+/// reach Telegram, the script tells the two apart by this. A line per fact:
+///   ok <unix time> · fail <unix time> · direct-down <unix time> · good <dc> <relay>
+enum State {
+    static var file: String?
+    static var ok: Date?
+    static var fail: Date?
+    private static var saved = Date.distantPast
+
+    static func load() {
+        guard let file, let text = try? String(contentsOfFile: file, encoding: .utf8) else { return }
+        func date(_ s: String) -> Date? { Double(s).map(Date.init(timeIntervalSince1970:)) }
+        for line in text.split(separator: "\n") {
+            let w = line.split(separator: " ").map(String.init)
+            switch (w.first ?? "", w.count) {
+            case ("ok", 2): ok = date(w[1])
+            case ("fail", 2): fail = date(w[1])
+            case ("direct-down", 2): directDown = date(w[1])
+            case ("good", 3): if let dc = Int(w[1]), relays.contains(w[2]) { goodRelay[dc] = w[2] }
+            default: break
+            }
+        }
+    }
+
+    /// Telegram answered: written at once when that is news, otherwise once a minute at most
+    static func reached() {
+        let news = fail.map { $0 >= (ok ?? .distantPast) } ?? false
+        ok = Date()
+        save(force: news)
+    }
+
+    static func failed() {
+        fail = Date()
+        save()
+    }
+
+    /// in place: the folder belongs to root, only the file to the proxy
+    static func save(force: Bool = true) {
+        guard let file, force || Date().timeIntervalSince(saved) > 60 else { return }
+        saved = Date()
+        func t(_ d: Date?) -> String? { d.map { String(Int($0.timeIntervalSince1970)) } }
+        var lines: [String] = []
+        if let v = t(ok) { lines.append("ok \(v)") }
+        if let v = t(fail) { lines.append("fail \(v)") }
+        if let v = t(directDown) { lines.append("direct-down \(v)") }
+        for (dc, r) in goodRelay.sorted(by: { $0.key < $1.key }) { lines.append("good \(dc) \(r)") }
+        try? (lines.joined(separator: "\n") + "\n").write(toFile: file, atomically: false, encoding: .utf8)
+    }
+}
 let dcAddresses: [Int: String] = [1: "149.154.175.50", 2: "149.154.167.51", 3: "149.154.175.100", 4: "149.154.167.91", 5: "149.154.171.5", 203: "91.105.192.100"]
 
 /// opens a TCP connection, TLS with the name `sni` if given; the handler gets it ready, or nil after `wait` seconds
@@ -436,8 +490,10 @@ final class Session {
             reach(hello) { [self] up, ws in
                 guard let up else {
                     log("DC\(hello.dc)\(hello.media ? " media" : ""): Telegram unreachable")
+                    State.failed()
                     return close()
                 }
+                State.reached()
                 upstream = up
                 up.send(relayInit)
                 let splitter = ws ? Splitter(tag: hello.tag) : nil
@@ -470,8 +526,17 @@ final class Session {
                 let d = direct.removeFirst()
                 // where these addresses are blocked they don't answer at all: four seconds are enough
                 return openWebSocket(d, at: wsAddress, wait: 4) { ws in
-                    if let ws { return done(ws, true) }
-                    if direct.isEmpty { directDown = Date() }
+                    if let ws {
+                        if directDown != nil {
+                            directDown = nil
+                            State.save()
+                        }
+                        return done(ws, true)
+                    }
+                    if direct.isEmpty {
+                        directDown = Date()
+                        State.save()
+                    }
                     next()
                 }
             }
@@ -482,7 +547,10 @@ final class Session {
                 // a relay that works answers within a second or two
                 return openWebSocket("kws\(hello.dc).\(r)", wait: 4) { ws in
                     if let ws {
-                        goodRelay[hello.dc] = r
+                        if goodRelay[hello.dc] != r {
+                            goodRelay[hello.dc] = r
+                            State.save()
+                        }
                         relayDown[r] = nil
                         return done(ws, true)
                     }
@@ -540,6 +608,7 @@ final class Session {
 var sessions: [ObjectIdentifier: Session] = [:]
 
 func serve(port: UInt16, secret: [UInt8]) -> Never {
+    State.load()
     let params = NWParameters.tcp
     params.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!)
     params.allowLocalEndpointReuse = true
@@ -665,16 +734,45 @@ func stun() -> Never {
     dispatchMain()
 }
 
+/// every way to Telegram for one data center, one after another: the direct WebSocket (DC 2 and 4), the relays,
+/// the data center itself. a line each, "ok" or "no"; exit code 0 if any answered
+func paths(dc: Int) -> Never {
+    var ways: [(String, (@escaping (Bool) -> Void) -> Void)] = []
+    if dc == 2 || dc == 4 {
+        ways.append(("direct kws\(dc).web.telegram.org", { done in openWebSocket("kws\(dc).web.telegram.org", at: wsAddress, wait: 4) { ws in ws?.close(); done(ws != nil) } }))
+    }
+    for r in relays.prefix(6) {
+        ways.append(("relay \(r)", { done in openWebSocket("kws\(dc).\(r)", wait: 4) { ws in ws?.close(); done(ws != nil) } }))
+    }
+    if let ip = dcAddresses[dc] {
+        ways.append(("dc \(ip)", { done in connect(ip, 443, sni: nil, wait: 4) { c in c?.cancel(); done(c != nil) } }))
+    }
+    var any = false
+    func next(_ i: Int) {
+        guard i < ways.count else { exit(any ? 0 : 1) }
+        ways[i].1 { ok in
+            print("\(ok ? "ok" : "no") \(ways[i].0)")
+            any = any || ok
+            next(i + 1)
+        }
+    }
+    queue.async { next(0) }
+    dispatchMain()
+}
+
 // MARK: - main
 
 let args = CommandLine.arguments
 switch (args.count > 1 ? args[1] : "", args.count) {
-case ("serve", 4):
+case ("serve", 4), ("serve", 5):
     guard let port = UInt16(args[2]), let secret = hexBytes(args[3]), secret.count == 16 else {
-        print("zapret-tg serve <port> <secret: 32 hex>")
+        print("zapret-tg serve <port> <secret: 32 hex> [state]")
         exit(2)
     }
+    if args.count == 5 { State.file = args[4] }
     serve(port: port, secret: secret)
+case ("paths", 2), ("paths", 3):
+    paths(dc: args.count == 3 ? Int(args[2]) ?? 2 : 2)
 case ("stun", 2):
     stun()
 case ("check", 5), ("check", 6):
@@ -684,6 +782,6 @@ case ("check", 5), ("check", 6):
     }
     check(host: args[2], port: port, secret: secret, dc: args.count == 6 ? Int(args[5]) ?? 2 : 2)
 default:
-    print("zapret-tg serve <port> <secret: 32 hex>\nzapret-tg check <host> <port> <secret> [dc]")
+    print("zapret-tg serve <port> <secret: 32 hex> [state]\nzapret-tg check <host> <port> <secret> [dc]\nzapret-tg paths [dc]\nzapret-tg stun")
     exit(2)
 }

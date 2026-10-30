@@ -44,7 +44,7 @@ extension AppModel {
         case "start", "restart": await privileged(["start"], success: L("zapret перезапущен"))
         case "check": await runCheck(); return
         case "update": await update(); return
-        case "telegram": await setTelegram(true)
+        case "telegram": await privileged(["telegram", "restart"], success: L("Прокси для Telegram перезапущен"))
         case "dns": await privileged(["dns"], success: L("DNS изменён"))
         case "proxy-settings": ws.open(URL(string: "x-apple.systempreferences:com.apple.Network-Settings.extension")!); return
         case "monitor":

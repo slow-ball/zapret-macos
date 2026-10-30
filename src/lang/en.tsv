@@ -261,3 +261,12 @@ YouTube снова открывается — адаптивная нашла п
 адаптивная: новых приёмов: %s — движок опробует их сам	adaptive: new tricks: %s — the engine tries them by itself
 в движке нет прокси для Telegram	the engine has no Telegram proxy
 Предыдущей версии нет	There is no previous version
+  Telegram: прокси не достаёт до Telegram	  Telegram: the proxy can't reach Telegram
+watchdog: прокси не достаёт до Telegram — обновляю посредников и перезапускаю	watchdog: the proxy can't reach Telegram — refreshing the relays and restarting
+Telegram не отвечает через прокси — подробности в «Проверке»	Telegram doesn't answer through the proxy — see Checks for details
+    %sадреса Telegram: %s · посредники: %s из %s · дата-центр напрямую: %s%s	    %sTelegram's addresses: %s · relays: %s of %s · the data center directly: %s%s
+открыты	open
+закрыты	closed
+открыт	open
+закрыт	closed
+Прокси для Telegram выключен	The Telegram proxy is off

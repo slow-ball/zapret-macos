@@ -156,6 +156,11 @@ struct MenuPanel: View {
             Spacer()
             if model.telegramBusy {
                 ProgressView().controlSize(.small)
+            } else if model.status.telegramRunning && !model.status.telegramReachable {
+                Button("Исправить") { Task { await model.restartTelegram() } }
+                    .buttonStyle(PillButtonStyle(tint: Theme.warn, size: .small))
+                    .fixedSize()
+                    .help("Свежий список посредников и перезапуск прокси")
             } else if model.status.telegramRunning && model.status.telegramConnected {
                 DoneBadge(text: "Подключено", size: 12)
             } else {
@@ -238,6 +243,7 @@ struct MenuPanel: View {
     }
 
     private var telegramState: String {
+        if model.status.telegramRunning && !model.status.telegramReachable { return L("Telegram не отвечает") }
         if model.status.telegramRunning { return L("прокси работает") }
         return model.status.telegram ? L("прокси не запущен") : L("прокси выключен")
     }

@@ -22,7 +22,8 @@ cmd_start()
 {
 	need_root start "$@"
 	installed || [ "$SRC" != "$RT" ] || die "zapret не установлен. Запустить zapret.command"
-	local name=$1 auto=off
+	local name=$1 auto=off was
+	was=$(current)
 	sync_runtime
 	background_job
 	trim_logs
@@ -57,9 +58,13 @@ cmd_start()
 		nfqws_launch && running && started=0
 	fi
 	set_autostart $auto
-	# the Telegram proxy is on but its service is gone: bring it back
-	if telegram_on && ! telegram_running; then cmd_telegram on >/dev/null; fi
+	# the Telegram proxy is on but its service is gone, or is one of an older release: set it up again
+	if telegram_on && { ! telegram_running || ! grep -qF "$TG_STATE" "$TG_PLIST" 2>/dev/null; }; then
+		cmd_telegram on >/dev/null
+	fi
 	if [ $started = 0 ]; then
+		# the adaptive one just switched on (or after a reset) finds tricks for the main services at once
+		[ "$name" = "$ADAPTIVE" ] && { [ "$was" != "$ADAPTIVE" ] || [ ! -s "$LADDER_STATE" ]; } && ladder_warmup_bg
 		ok "zapret запущен: %s%s%s" "${B}" "$name" "${N}"
 		say "  %sПерезапустить браузер (Cmd+Q), чтобы сбросились старые соединения.%s" "${D}" "${N}"
 		notify "$(msg "Запущен: %s" "$name")"

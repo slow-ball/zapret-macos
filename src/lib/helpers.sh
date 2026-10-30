@@ -141,7 +141,7 @@ sync_runtime()
 	chmod 755 "$RT" "$RT/zapret.sh" "$RT/nfqws/run.sh"
 }
 
-# the files the engine writes stay its own: it runs without root ($NQ_UID) and chowns them only when it
+# the files the engine and the Telegram proxy write stay theirs: it runs without root ($NQ_UID) and chowns them only when it
 # starts. without this, any command that syncs the runtime while the engine runs (Telegram on, an update)
 # would stop the smart mode and the ladder from learning until the next start
 engine_files_own()
@@ -150,6 +150,8 @@ engine_files_own()
 	for f in "$AUTO_LIST" "$AUTO_WHY" "$LADDER_STATE" "$LADDER_SEEN" "$LADDER_STATS"; do
 		[ -f "$f" ] && chown "$NQ_UID" "$f"
 	done
+	# the Telegram proxy's, the same way: it runs as nobody
+	[ -f "$TG_STATE" ] && chown nobody "$TG_STATE"
 	return 0
 }
 

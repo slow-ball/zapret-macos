@@ -208,8 +208,8 @@ net_speed()
 }
 
 # tries the rungs after the current one for the keys ($4…), a speed measured by the function $1 on each,
-# until it reaches $2; $3 is where it started. every other rung once at most, eight at most (each try restarts
-# the engine for a moment). the best one stays; nothing better — everything as it was, also when a user
+# until it reaches $2; $3 is where it started. every other rung once at most, eight at most or $LADDER_TRIES
+# (each try restarts the engine for a moment). the best one stays; nothing better — everything as it was, also when a user
 # command stops this. true if it got better
 ladder_search()
 {
@@ -220,7 +220,7 @@ ladder_search()
 	best=$cur best_s=$base
 	cp "$LADDER_STATE" "$RT/ladder-before" 2>/dev/null || : > "$RT/ladder-before"
 	trap 'cat "$RT/ladder-before" > "$LADDER_STATE"; nfqws_reload; rm -f "$LEARN_BG" "$RT/ladder-before"; exit 130' INT TERM
-	for ((i = 1; i < size && i <= 8; i++)); do
+	for ((i = 1; i < size && i <= ${LADDER_TRIES:-8}; i++)); do
 		r=$(((cur + i) % size))
 		ladder_set "$r" "$@"
 		nfqws_reload || break
@@ -235,6 +235,31 @@ ladder_search()
 	rm -f "$RT/ladder-before"
 	LADDER_FOUND=$best LADDER_FOUND_SPEED=$best_s
 	[ "$best" != "$cur" ]
+}
+
+# a quick start of the adaptive strategy (an install, a reset, a switch to it): YouTube and Discord get a trick
+# that works right away, the whole ladder if need be, instead of waiting until the engine has seen enough failures
+# to climb (several broken connections each). in the background: a user's command stops it like the other
+# searches (learn_bg_stop), and everything is as it was
+ladder_warmup()
+{
+	adaptive_on && tests_live && ! learn_bg_running || return 0
+	echo $$ > "$LEARN_BG"
+	if [ "$(yt_speed)" = 0 ] && LADDER_TRIES=32 ladder_search yt_speed 1 0 youtube.com googlevideo.com ytimg.com; then
+		log "$(msg "адаптивная: YouTube на приёме %s" $((LADDER_FOUND + 1)))"
+	fi
+	if [ "$(discord_speed)" = 0 ] &&
+		LADDER_TRIES=32 ladder_search discord_speed 1 0 discord.com discordapp.com discordapp.net discord.gg discord.media; then
+		log "$(msg "адаптивная: Discord на приёме %s" $((LADDER_FOUND + 1)))"
+	fi
+	rm -f "$LEARN_BG"
+}
+
+# starts it apart from the command that switched (the app waits for that one): the root copy, detached
+ladder_warmup_bg()
+{
+	[ -x "$RT/zapret.sh" ] || return 0
+	nohup "$RT/zapret.sh" warmup </dev/null >/dev/null 2>&1 &
 }
 
 # the adaptive strategy on what the engine can't see: a page that stops halfway (the provider lets the
@@ -339,6 +364,7 @@ watchdog_run()
 		log "$(msg "watchdog: прокси для Telegram не работал, запускаю")"
 		cmd_telegram on >/dev/null
 	fi
+	telegram_repair
 	watchdog_on || return 0
 	running || return 0
 	vpn_active && return 0

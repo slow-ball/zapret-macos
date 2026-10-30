@@ -26,6 +26,7 @@ cmd_diag()
 			ok "Telegram отвечает через прокси (127.0.0.1:%s)" "$(telegram_port)"
 		else
 			bad "прокси для Telegram запущен, но Telegram через него не отвечает"; hint telegram
+			telegram_paths
 		fi
 		flowseal_tg_running && { warn "запущено приложение TG WS Proxy — его лучше закрыть, прокси уже встроен"; hint quit-flowseal; }
 	fi

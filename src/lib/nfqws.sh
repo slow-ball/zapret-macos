@@ -32,6 +32,8 @@ nfqws_install()
 		done
 		echo "$NQ_TAG" > "$RT/nfqws/bin/VERSION"
 		chown -R root:wheel "$RT/nfqws"
+		# a running Telegram proxy is still the old binary: it restarts as the new one
+		launchctl kickstart -k system/$TG_LABEL >/dev/null 2>&1
 		ok "nfqws установлен"
 		ret=0
 	fi

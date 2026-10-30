@@ -165,6 +165,34 @@ check "поиск: лучше нет — всё как было" eq "$(sort "$LA
 count() { echo x >> "$TMP/tries"; echo 1; }
 : > "$TMP/tries"; ladder_search count 999 5 a.com
 check "поиск: не больше восьми попыток" eq "$(wc -l < "$TMP/tries" | tr -d ' ')" 8
+# the quick start: Discord found far up the ladder (past eight tries), YouTube that works left alone
+: > "$LADDER_STATE"
+echo "$ADAPTIVE" > "$CURRENT"
+tests_live() { :; }
+yt_speed() { echo 900; }
+discord_speed() { [ "$(ladder_get discord.com)" = 12 ] && echo 50 || echo 0; }
+ladder_warmup
+check "быстрый старт: Discord на дальней ступени" eq "$(ladder_get discord.com)/$(ladder_get discord.media)" "12/12"
+check "быстрый старт: YouTube не тронут" eq "$(ladder_get youtube.com)" 0
+check "быстрый старт: поиск снят" eval '[ ! -f "$LEARN_BG" ]'
+echo "macos" > "$CURRENT"; : > "$LADDER_STATE"
+ladder_warmup
+check "быстрый старт: только у адаптивной" eq "$(ladder_get discord.com)" 0
+rm -f "$CURRENT"
+unset -f tests_live yt_speed discord_speed
+. "$ROOT/src/lib/sites.sh"; . "$ROOT/src/lib/service.sh"
+# what the Telegram proxy saw: a failure after the last success, a recent one, means Telegram doesn't answer
+mkdir -p "$(dirname "$TG_STATE")"
+now=$(date +%s)
+rm -f "$TG_STATE"
+check "Telegram: ничего не видел — отвечает" telegram_reachable
+printf 'ok %s\nfail %s\n' $((now - 60)) $((now - 10)) > "$TG_STATE"
+check "Telegram: свежий сбой после успеха — не отвечает" eval '! telegram_reachable'
+printf 'ok %s\nfail %s\n' $((now - 5)) $((now - 10)) > "$TG_STATE"
+check "Telegram: успех после сбоя — отвечает" telegram_reachable
+printf 'ok %s\nfail %s\ngood 2 relay.co.uk\n' $((now - 900)) $((now - 600)) > "$TG_STATE"
+check "Telegram: старый сбой — не считается" telegram_reachable
+rm -f "$TG_STATE"
 # the sites used most, for the watchdog
 now=$(date +%s)
 printf 'a.com 5 %s\nb.com 50 %s\nyoutube.com 900 %s\nold.com 999 %s\ndiscordapp.com 70 %s\nsn-ab.googlevideo.com 80 %s\n' "$now" "$now" "$now" $((now - 300000)) "$now" "$now" > "$LADDER_SEEN"

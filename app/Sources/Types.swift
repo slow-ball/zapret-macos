@@ -22,6 +22,8 @@ struct Status: Decodable, Equatable {
     var telegramRunning = false
     /// Telegram itself holds a connection to the proxy: nothing left to connect
     var telegramConnected = false
+    /// the proxy itself reaches Telegram (it notes every try): connected to a proxy that can't is no help
+    var telegramReachable = true
     var telegramLink = ""
     var flowsealTelegram = false
     /// the fresh strategies in use (pack.sh): "1.10.4+20261023.2006", empty — the release's
@@ -45,14 +47,15 @@ struct Status: Decodable, Equatable {
         autostart = get(.autostart, autostart); autofix = get(.autofix, autofix); autoupdate = get(.autoupdate, autoupdate)
         vpn = get(.vpn, vpn); ipv6 = get(.ipv6, ipv6); found = get(.found, found); sites = get(.sites, sites)
         project = get(.project, project); telegram = get(.telegram, telegram); telegramRunning = get(.telegramRunning, telegramRunning)
-        telegramConnected = get(.telegramConnected, telegramConnected)
+        telegramConnected = get(.telegramConnected, telegramConnected); telegramReachable = get(.telegramReachable, telegramReachable)
         telegramLink = get(.telegramLink, telegramLink); flowsealTelegram = get(.flowsealTelegram, flowsealTelegram)
         pack = get(.pack, pack); packOn = get(.packOn, packOn); ladder = get(.ladder, ladder); videoQuic = get(.videoQuic, videoQuic)
     }
 
     private enum Keys: String, CodingKey {
         case version, previous, installed, running, strategy, engine, scope, game, autostart, autofix, autoupdate, vpn, ipv6
-        case found, sites, project, telegram, telegramRunning, telegramConnected, telegramLink, flowsealTelegram, pack, packOn, ladder, videoQuic
+        case found, sites, project, telegram, telegramRunning, telegramConnected, telegramReachable, telegramLink, flowsealTelegram, pack, packOn, ladder,
+            videoQuic
     }
 }
 

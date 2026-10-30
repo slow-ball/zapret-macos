@@ -11,15 +11,15 @@ jbool() { if "$@"; then echo true; else echo false; fi; }
 cmd_status()
 {
 	if [ "$1" = --json ]; then
-		local cur tr tc=false
+		local cur tr tc=false ta=true
 		cur=$(current)
 		tr=$(jbool telegram_running)
-		[ "$tr" = true ] && tc=$(jbool telegram_connected)
+		[ "$tr" = true ] && tc=$(jbool telegram_connected) ta=$(jbool telegram_reachable)
 		printf '{"version":%s,"previous":%s,"installed":%s,"running":%s,"strategy":%s,"engine":"nfqws","scope":%s,"game":%s,' \
 			"$(jstr "$VERSION")" "$(jstr "$(previous_version)")" "$(jbool installed)" "$(jbool running)" "$(jstr "$cur")" \
 			"$(jstr "$(scope)")" "$(jstr "$(game_mode)")"
-		printf '"telegram":%s,"telegramRunning":%s,"telegramConnected":%s,"telegramLink":%s,"flowsealTelegram":%s,' \
-			"$(jbool telegram_on)" "$tr" "$tc" "$(jstr "$(telegram_on && telegram_link)")" \
+		printf '"telegram":%s,"telegramRunning":%s,"telegramConnected":%s,"telegramReachable":%s,"telegramLink":%s,"flowsealTelegram":%s,' \
+			"$(jbool telegram_on)" "$tr" "$tc" "$ta" "$(jstr "$(telegram_on && telegram_link)")" \
 			"$(jbool flowseal_tg_running)"
 		printf '"pack":%s,"packOn":%s,"ladder":%s,"videoQuic":%s,' "$(jstr "$(pack_active && pack_stamp)")" "$(jbool packs_on)" \
 			"$(count_entries "$LADDER_STATE")" "$(jbool video_quic)"
@@ -33,7 +33,8 @@ cmd_status()
 	on=$(msg "вкл"); off=$(msg "выкл")
 	if running; then say "%s●%s работает: %s" "${G}" "${N}" "${B}$(current)${N}"; else say "%s●%s остановлен" "${R}" "${N}"; fi
 	if telegram_on; then
-		if telegram_running && telegram_connected; then say "  Telegram: подключён через прокси"
+		if telegram_running && ! telegram_reachable; then say "  Telegram: прокси не достаёт до Telegram"
+		elif telegram_running && telegram_connected; then say "  Telegram: подключён через прокси"
 		elif telegram_running; then say "  Telegram: прокси работает"; else say "  Telegram: прокси не отвечает"; fi
 	fi
 	say "  сайты: %s · игры: %s · автозапуск: %s · автопочинка: %s · автообновление: %s · приложение: %s" \
@@ -150,7 +151,7 @@ zapret-macos $VERSION
   zapret.sh autostart [on|off]   start at boot
   zapret.sh watchdog [on|off]    self-repair
   zapret.sh autoupdate [on|off]  update once a day
-  zapret.sh telegram [on|off|link|test]
+  zapret.sh telegram [on|off|restart|link|test]
                                  the proxy for Telegram Desktop; link — the link to connect,
                                  test — check that Telegram answers through the proxy
   zapret.sh app                  install the zapret app into Applications
@@ -194,7 +195,7 @@ zapret-macos $VERSION
   zapret.sh autostart [on|off]   автозапуск при загрузке
   zapret.sh watchdog [on|off]    автопочинка
   zapret.sh autoupdate [on|off]  автообновление раз в сутки
-  zapret.sh telegram [on|off|link|test]
+  zapret.sh telegram [on|off|restart|link|test]
                                  прокси для Telegram Desktop; link — ссылка для подключения,
                                  test — проверить, что Telegram отвечает через прокси
   zapret.sh app                  установить приложение zapret в «Программы»

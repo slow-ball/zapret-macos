@@ -24,6 +24,7 @@ NQ_SHA256=99cdb6e343d700571baa13d7d34530f8b2837b119686efa0fb6065651e8258c7
 APPTAG=utunws-1               # the release with zapret-app.zip (workflow Build); empty: the app is built from source
 APPSHA256=9f14e93bb2403c1665a4877f3af2d49371c1574d17de433abd774cc811ceaa2b
 TG_BIN=$RT/nfqws/bin/zapret-tg   # our Telegram proxy (engine/tg), installed with the engine
+TG_STATE=$RT/telegram/state       # what the proxy learned: the way that works, when Telegram last answered
 TG_LABEL=com.zapret-macos.telegram
 TG_PLIST=/Library/LaunchDaemons/$TG_LABEL.plist
 WD_LABEL=com.zapret-macos.watchdog
@@ -173,6 +174,7 @@ case "$1" in
 	video)      shift; cmd_video "$@" ;;
 	learn)      shift; cmd_learn "$@" ;;
 	ladder)     shift; cmd_ladder "$@" ;;
+	warmup)     need_root warmup; ladder_warmup ;;
 	update)     shift; cmd_update "$@" ;;
 	repair)     shift; cmd_repair "$@" ;;
 	reset)      shift; cmd_reset "$@" ;;

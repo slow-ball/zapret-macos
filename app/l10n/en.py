@@ -362,6 +362,10 @@ EN = {
 "Сейчас: %@. Подписанный пакет, только стратегии и списки": "Now: %@. A signed pack, only strategies and lists",
 "Новые стратегии Windows-версии без обновления zapret — подписанный пакет, только стратегии и списки": "New strategies of the Windows version without updating zapret — a signed pack, only strategies and lists",
 "Видео YouTube": "YouTube video",
+"Telegram не отвечает": "Telegram doesn't answer",
+"Прокси работает, но не достаёт до Telegram": "The proxy runs but can't reach Telegram",
+"Свежий список посредников и перезапуск прокси": "A fresh list of relays and a restart of the proxy",
+"Прокси для Telegram перезапущен": "The Telegram proxy restarted",
 "Адаптация": "Adaptation",
 "Голос Discord": "Discord voice",
 }

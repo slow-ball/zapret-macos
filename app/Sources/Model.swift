@@ -300,6 +300,13 @@ final class AppModel {
         telegramBusy = false
     }
 
+    /// the proxy runs but doesn't reach Telegram: a fresh list of relays, the proxy from scratch
+    func restartTelegram() async {
+        telegramBusy = true
+        await privileged(["telegram", "restart"], success: L("Прокси для Telegram перезапущен"))
+        telegramBusy = false
+    }
+
     /// one click from the menu bar: turns the proxy on if needed, then hands the link to Telegram
     func connectTelegramFully() async {
         if !status.telegram || !status.telegramRunning {
