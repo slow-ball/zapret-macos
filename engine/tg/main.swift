@@ -482,8 +482,9 @@ final class Session {
     func start() {
         client.start(queue: queue)
         readExactly(64) { [self] h in
-            guard let h, let hello = readHello(h, secret: secret) else {
-                log("bad handshake: another secret or protocol")
+            guard let h else { return close() }  // the client gave up before its handshake
+            guard let hello = readHello(h, secret: secret) else {
+                log("bad handshake: another secret (an old proxy left in Telegram?) or protocol")
                 return close()
             }
             let (relayInit, ciphers) = session(for: hello, secret: secret)

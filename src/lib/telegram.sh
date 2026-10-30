@@ -10,6 +10,15 @@ telegram_link()    { echo "tg://proxy?server=127.0.0.1&port=$(telegram_port)&sec
 # Telegram (Desktop or the App Store one) holds a connection to the proxy: it is already set up there.
 # the caller knows the proxy runs; lsof only while Telegram does: the app asks every few seconds
 telegram_connected() { pgrep -qx Telegram && lsof -a -nP -c Telegram -iTCP:"$(telegram_port)" -sTCP:ESTABLISHED -t >/dev/null 2>&1; }
+# 32 hex digits from the id of this Mac: the same after a reinstall, different on every Mac
+telegram_secret()
+{
+	local id
+	id=$(ioreg -rd1 -c IOPlatformExpertDevice 2>/dev/null | awk -F'"' '/IOPlatformUUID/ { print $4 }')
+	[ -n "$id" ] || id=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+	printf 'zapret-macos telegram %s' "$id" | shasum -a 256 | cut -c1-32
+}
+
 # Telegram answers through the proxy, as the proxy itself saw it last (State in engine/tg): a failure newer than
 # the last success and of the last five minutes is "no" — Telegram Desktop may well be connected to a proxy
 # that can't reach Telegram. nothing seen yet is "yes"
@@ -100,8 +109,9 @@ cmd_telegram()
 				return 0
 			fi
 			telegram_install || die "Прокси для Telegram не установлен"
-			# one secret for good: Telegram keeps the proxy it was given
-			[ -s "$d/secret" ] || od -An -N16 -tx1 /dev/urandom | tr -d ' \n' > "$d/secret"
+			# one secret for good: Telegram keeps the proxy it was given. made from this Mac's own id, so a
+			# reinstall gives the same one and the proxy Telegram has keeps working
+			[ -s "$d/secret" ] || telegram_secret > "$d/secret"
 			chmod 644 "$d/secret"
 			# the first free port of 1443-1453: another proxy (Flowseal's app) may hold 1443.
 			# bootout returns before the job is gone, and bootstrap of a job still there fails
