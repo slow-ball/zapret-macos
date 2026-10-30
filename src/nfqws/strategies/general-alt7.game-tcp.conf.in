@@ -1,0 +1,7 @@
+--filter-tcp="@GAME_TCP@"
+--ipset="@GAMEIPSET@"
+--ipset-exclude="@LISTS@/ipset-exclude.txt"
+--ipset-exclude="@LISTS@/ipset-exclude-user.txt"
+--dpi-desync=syndata
+--dpi-desync-any-protocol=1
+--dpi-desync-cutoff=n4

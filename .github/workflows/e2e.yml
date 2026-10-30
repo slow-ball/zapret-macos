@@ -1,0 +1,303 @@
+name: E2E
+run-name: "E2E · ${{ github.ref_name }}"
+
+# The user's whole path on a real macOS (Intel: Apple Silicon runners of GitHub are rarely free): install,
+# the Windows version's and our own strategies, the automatic choice, the modes of sites, the game filter,
+# "a site doesn't open", the deep search, the Telegram proxy, an update, the repair after a macOS update,
+# diagnostics, the app, an uninstall without traces.
+# A runner has no DPI, so the bypass itself can't be checked here — only that everything installs, runs,
+# keeps the internet working and goes away. sudo needs no password on GitHub's runners.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Intel only: GitHub almost never gives free accounts Apple Silicon Macs
+        os: [macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    env:
+      Z: /Users/runner/zapret-macos/src/zapret.sh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: the project in ~/zapret-macos
+        run: |
+          rsync -a --exclude .git ./ ~/zapret-macos/
+          # zapret speaks the language of macOS; the checks below look for Russian text
+          defaults write -g AppleLanguages -array ru en
+
+      - name: install
+        run: |
+          sudo "$Z" install --no-app
+          ! test -e /opt/zapret
+
+      - name: the engine of this commit
+        run: |
+          # the release's engine is pinned (NQ_TAG); e2e checks the one of engine/ as it is now
+          build/utunws.sh engine-dist
+          mkdir engine-pkg && tar -xzf engine-dist/utunws.tar.gz -C engine-pkg
+          sudo cp engine-pkg/bin/utunws /opt/zapret-macos/nfqws/bin/utunws.new
+          sudo mv -f /opt/zapret-macos/nfqws/bin/utunws.new /opt/zapret-macos/nfqws/bin/utunws
+          sudo "$Z" start
+          pgrep -x utunws
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+
+      - name: running after install
+        run: |
+          # the app runs these without a password; update installs only signed releases
+          sudo grep -q "zapret.sh update," /etc/sudoers.d/zapret-macos
+          "$Z" status --json | tee status.json
+          python3 -c 'import json; s = json.load(open("status.json")); assert s["installed"] and s["running"] and s["autostart"], s'
+
+      - name: a strategy of the Windows version
+        run: |
+          sudo "$Z" start "nfqws general (ALT13)"
+          pgrep -x utunws
+          sudo pfctl -a com.apple/zapret-macos -s rules | grep route-to
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+
+      - name: our own strategies, switched without a restart
+        run: |
+          sudo "$Z" start "macos"
+          pid=$(pgrep -f /opt/zapret-macos/nfqws/run.sh)
+          for s in "macos (ALT8)" "macos (ALT14)"; do
+            sudo "$Z" start "$s"
+            pgrep -x utunws
+            # the same run.sh: only utunws read the new strategy
+            test "$(pgrep -f /opt/zapret-macos/nfqws/run.sh)" = "$pid"
+            sudo pfctl -a com.apple/zapret-macos -s rules | grep route-to
+            curl -fsS -o /dev/null -m 20 https://www.google.com/
+          done
+          test "$(cat /opt/zapret-macos/current)" = "macos (ALT14)"
+
+      - name: another network, without a restart of the service
+        run: |
+          # what a change of Wi-Fi or waking up does: the engine starts again for the network,
+          # run.sh and its setup stay
+          pid=$(pgrep -f /opt/zapret-macos/nfqws/run.sh | head -1)
+          engine=$(pgrep -x utunws)
+          sudo "$Z" repair --net --json | tee net.json
+          python3 -c 'import json; r = json.load(open("net.json")); assert r["fixed"], r'
+          test "$(pgrep -f /opt/zapret-macos/nfqws/run.sh | head -1)" = "$pid"
+          test "$(pgrep -x utunws)" != "$engine"
+          sudo pfctl -a com.apple/zapret-macos -s rules | grep route-to
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+          sudo grep -q "сеть сменилась" /var/log/zapret-macos-nfqws.log
+
+      - name: strategy search, the likely ones first
+        run: |
+          sudo "$Z" check --json | tee fast.json
+          python3 - <<'EOF'
+          import json
+          ev = [json.loads(l) for l in open("fast.json") if l.startswith("{")]
+          results = [e for e in ev if e["event"] == "result"]
+          # it starts with the running strategy
+          assert results[0]["name"] == "macos (ALT14)", results[0]
+          assert ev[-1]["event"] == "finish" and ev[-1]["best"], ev[-1]
+          print("проверено", len(results))
+          EOF
+          pgrep -x utunws
+
+      - name: strategy search, every strategy for real
+        run: |
+          sudo "$Z" check --json --all | tee check.json
+          "$Z" list > names.txt
+          python3 - <<'EOF'
+          import json
+          ev = [json.loads(l) for l in open("check.json") if l.startswith("{")]
+          results = [e for e in ev if e["event"] == "result"]
+          names = [l.strip() for l in open("names.txt") if l.strip()]
+          # every strategy once, the adaptive one too
+          assert sorted(e["name"] for e in results) == sorted(names), (len(results), len(names))
+          assert "Адаптивная" in names
+          assert ev[-1]["event"] == "finish" and ev[-1]["best"], ev[-1]
+          EOF
+          pgrep -x utunws
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+
+      - name: scopes and the game filter
+        run: |
+          # three rounds: restarts of the engine must not race
+          for round in 1 2 3; do
+            for s in smart lists all; do sudo "$Z" scope "$s"; pgrep -x utunws; done
+          done
+          # smart mode: the engine also reads the replies of servers (its own capture of incoming packets)
+          sudo "$Z" scope smart
+          sleep 1
+          sudo tail -20 /var/log/zapret-macos-nfqws.log | grep -q "incoming packets of .*: on"
+          [ "$(sudo lsof -p "$(pgrep -x utunws)" 2>/dev/null | grep -c /dev/bpf)" -ge 2 ]
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+          sudo "$Z" scope all
+          sleep 1
+          [ "$(sudo lsof -p "$(pgrep -x utunws)" 2>/dev/null | grep -c /dev/bpf)" = 1 ]
+          sudo "$Z" game all
+          pgrep -x utunws
+          sudo pfctl -a com.apple/zapret-macos -s rules | grep -F '1024:65535'
+          sudo "$Z" game off
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+
+      - name: a site that doesn't open, and why
+        run: |
+          # no DPI here: the site opens as it is, so it isn't zapret's job and goes into no list
+          sudo "$Z" site https://www.example.com/page --json | tee site.json
+          python3 -c 'import json; s = json.load(open("site.json")); assert s["site"] == "example.com" and s["works"] and s["reason"] == "open", s'
+          ! grep -qx example.com ~/zapret-macos/lists/list-user.txt
+          sudo "$Z" site zapret-test.invalid --json | tee nosite.json
+          python3 -c 'import json; s = json.load(open("nosite.json")); assert s["reason"] == "nodns" and not s["works"], s'
+
+      - name: looking for a site's strategy keeps the internet up
+        run: |
+          # an address that opens with no strategy: every option is tried on it, live, over the running one
+          pid=$(pgrep -f /opt/zapret-macos/nfqws/run.sh | head -1)
+          ( while sleep 1; do curl -s -o /dev/null -m 3 https://www.google.com/ && echo ok || echo fail; done ) > net.log &
+          watcher=$!
+          sudo "$Z" learn zapret-test.invalid
+          kill $watcher
+          test "$(pgrep -f /opt/zapret-macos/nfqws/run.sh | head -1)" = "$pid"
+          pgrep -x utunws
+          ! sudo grep -q zapret-test.invalid /opt/zapret-macos/nfqws.conf
+          # the rest of the internet: almost every second answered while the options changed
+          echo "ok $(grep -c ok net.log), fail $(grep -c fail net.log)"
+          [ "$(grep -c fail net.log)" -le $(( $(grep -c ok net.log) / 5 )) ]
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+
+      - name: root does not trust the project folder
+        run: |
+          # a program of the user swaps its list for a link to a root-only file; the sudoers rule asks no password.
+          # start reads the list through the link; site writes to it only for a site blocked by name
+          L=~/zapret-macos/lists
+          mv "$L/list-user.txt" "$L/list-user.bak"
+          ln -s /etc/sudoers "$L/list-user.txt"
+          sudo "$Z" start
+          ! sudo grep -rq "ALL" /opt/zapret-macos/lists
+          sudo "$Z" site example.org --json
+          ! sudo grep -q example.org /etc/sudoers
+          sudo visudo -c
+          rm "$L/list-user.txt"
+          mv "$L/list-user.bak" "$L/list-user.txt"
+          sudo "$Z" start
+
+      - name: deep search
+        run: |
+          # no DPI here: the site opens as it is, and the strategy must stay
+          sudo "$Z" deep www.example.com --json | tee deep.json
+          tail -1 deep.json | python3 -c 'import json, sys; e = json.loads(sys.stdin.read()); assert e["event"] == "finish" and e.get("reason") == "open", e'
+          pgrep -x utunws
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+
+      - name: DNS for neural networks
+        run: |
+          # installing a profile needs a person in System Settings; here: the state and switching off
+          sudo "$Z" dns status --json | tee dns.json
+          python3 -c 'import json; s = json.load(open("dns.json")); assert s["dns"] == "", s'
+          sudo "$Z" dns off
+          ! sudo "$Z" dns nosuch
+
+      - name: Telegram proxy
+        run: |
+          sudo "$Z" telegram on
+          "$Z" telegram test
+          sudo "$Z" telegram on | grep -q "уже работает"
+
+      - name: update as root, like the daily autoupdate
+        run: |
+          # the root copy looks old: the update downloads this very commit and runs the new script from
+          # that download, never from the project folder. users get only releases, tests get the commit
+          echo 0.0.1 | sudo tee /opt/zapret-macos/VERSION
+          sudo env ZAPRET_UPDATE_REF=${{ github.event.pull_request.head.sha || github.sha }} /opt/zapret-macos/zapret.sh update
+          test "$(cat /opt/zapret-macos/VERSION)" = "$(cat ~/zapret-macos/src/VERSION)"
+          test "$(cat /opt/zapret-macos/previous)" = 0.0.1
+          test "$(cat /opt/zapret-macos/project)" = "$HOME/zapret-macos"
+          pgrep -x utunws
+          # going back only to the previous version, and only a version number gets in
+          ! sudo "$Z" update --to 0.9.0
+          ! sudo "$Z" update --to "1; touch /tmp/x"
+          ! test -e /tmp/x
+
+      - name: repair after a macOS update
+        run: |
+          # what a system update may reset: the sudoers rule and the running engine
+          sudo rm /etc/sudoers.d/zapret-macos
+          sudo launchctl bootout system/com.zapret-macos.nfqws
+          sleep 2
+          ! pgrep -x utunws
+          sudo "$Z" repair --json | tee repair.json
+          python3 -c 'import json; r = json.load(open("repair.json")); assert len(r["fixed"]) >= 2, r'
+          sudo visudo -c -f /etc/sudoers.d/zapret-macos
+          pgrep -x utunws
+          # a stopped zapret stays stopped
+          sudo "$Z" stop
+          sudo "$Z" repair
+          ! pgrep -x utunws
+          sudo "$Z" start
+
+      - name: fresh strategies without a release
+        run: |
+          sudo "$Z" pack status --json | tee pack.json
+          python3 -c 'import json; s = json.load(open("pack.json")); assert s["on"], s'
+          # a pack is taken only with the signature of the key of packs and only with allowed content;
+          # both are covered by tests/unit.sh. here: switching off and on keeps zapret running
+          sudo "$Z" pack off
+          test -f /opt/zapret-macos/pack-off
+          sudo "$Z" pack on
+          ! test -f /opt/zapret-macos/pack-off
+          pgrep -x utunws
+
+      - name: reset to how zapret starts out
+        run: |
+          sudo "$Z" scope smart
+          sudo "$Z" game all
+          sudo "$Z" reset
+          test "$(cat /opt/zapret-macos/current)" = "Адаптивная"
+          ! test -e /opt/zapret-macos/scope
+          ! test -e /opt/zapret-macos/game
+          ! test -e /opt/zapret-macos/check-worked
+          test -f ~/zapret-macos/lists/list-user.txt
+          pgrep -x utunws
+
+      - name: diagnostics
+        run: |
+          sudo "$Z" diag --tags | tee diag.txt
+          grep -q "работает, стратегия" diag.txt
+
+      - name: in English when macOS is in English
+        run: |
+          defaults write -g AppleLanguages -array en ru
+          sudo "$Z" diag --tags | tee diag-en.txt
+          grep -q "running, strategy" diag-en.txt
+          ! grep -q "[А-Яа-я]" <(grep -v "^#" diag-en.txt | grep -v "@fix")
+          "$Z" help | grep -q "find a strategy"
+          defaults write -g AppleLanguages -array ru en
+
+      - name: the app from the release
+        run: |
+          "$Z" app
+          codesign -v --deep /Applications/zapret.app
+          test -d /Applications/zapret.app/Contents/PlugIns/ZapretWidget.appex
+
+      - name: stop and uninstall, nothing left
+        run: |
+          sudo "$Z" stop
+          ! pgrep -x utunws
+          sudo "$Z" uninstall --yes
+          for p in /opt/zapret-macos /etc/sudoers.d/zapret-macos; do ! test -e "$p" || { echo "left: $p"; exit 1; }; done
+          ! ls /Library/LaunchDaemons | grep -i zapret
+          ! sudo pfctl -a com.apple/zapret-macos -s rules 2>/dev/null | grep .
+          ! pgrep -f tg_ws_proxy
+          curl -fsS -o /dev/null -m 20 https://www.google.com/
+
+      - name: logs
+        if: failure()
+        run: |
+          sudo tail -40 /var/log/zapret-macos.log /var/log/zapret-macos-nfqws.log /var/log/zapret-macos-telegram.log 2>/dev/null || true
+          sudo pfctl -s rules 2>/dev/null | head -20 || true
+          # a crash of the engine: where it fell, from the report macOS writes
+          for f in /Library/Logs/DiagnosticReports/utunws*; do [ -e "$f" ] && sudo grep -oE '"(symbol|exception|signal|imageOffset)":[^,]*' "$f" | head -40; done || true
+          cat /opt/zapret-macos/nfqws.conf 2>/dev/null | head -40 || true

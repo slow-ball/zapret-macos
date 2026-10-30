@@ -1,0 +1,53 @@
+name: Weekly digest
+run-name: "Weekly digest"
+
+# Once a week: what piled up since the last release. Fixes reach users only with a signed release, and a
+# release can only be signed off GitHub. Something to release: one open issue «Готово к выпуску» with the
+# list; nothing: it is closed.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TITLE: Готово к выпуску
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: digest
+        run: |
+          last=$(gh release view --json tagName -q .tagName)
+          commits=$(git log --no-merges --format='- %s (%h)' "$last..origin/main")
+          prs=$(gh pr list --state open --json number,title -q '.[] | "- #\(.number) \(.title)"')
+          issue=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number -q '.[0].number')
+          if [ -z "$commits" ] && [ -z "$prs" ]; then
+            [ -n "$issue" ] && gh issue close "$issue" --comment "Всё выпущено в $last."
+            exit 0
+          fi
+          {
+            echo "После $last в main:"
+            echo
+            echo "${commits:-- ничего}"
+            echo
+            echo "Ждут слияния (стратегии, зависимости):"
+            echo
+            echo "${prs:-- ничего}"
+            echo
+            echo "Выпуск: слить нужное, поднять версию, собрать приложение (workflow «utunws»), тег, релиз и подпись (build/release.sh), Homebrew."
+          } > body.md
+          if [ -n "$issue" ]; then
+            gh issue edit "$issue" --body-file body.md
+          else
+            gh issue create --title "$TITLE" --body-file body.md
+          fi

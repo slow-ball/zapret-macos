@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "indentation": { "spaces": 4 },
+  "lineLength": 160,
+  "maximumBlankLines": 1,
+  "respectsExistingLineBreaks": true,
+  "lineBreakBeforeEachArgument": false,
+  "rules": {
+    "DoNotUseSemicolons": false,
+    "OneVariableDeclarationPerLine": false,
+    "AlwaysUseLowerCamelCase": false,
+    "GroupNumericLiterals": false,
+    "ReplaceForEachWithForLoop": false,
+    "OneCasePerLine": false
+  }
+}

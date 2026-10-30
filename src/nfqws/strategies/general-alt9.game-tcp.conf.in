@@ -1,0 +1,10 @@
+--filter-tcp="@GAME_TCP@"
+--ipset="@GAMEIPSET@"
+--ipset-exclude="@LISTS@/ipset-exclude.txt"
+--ipset-exclude="@LISTS@/ipset-exclude-user.txt"
+--dpi-desync=hostfakesplit
+--dpi-desync-repeats=4
+--dpi-desync-any-protocol=1
+--dpi-desync-cutoff=n3
+--dpi-desync-fooling=ts
+--dpi-desync-hostfakesplit-mod=host=ozon.ru

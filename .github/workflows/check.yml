@@ -1,0 +1,76 @@
+name: Check
+run-name: "Check · ${{ github.ref_name }}"
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    # Intel: GitHub hands out Apple Silicon Macs to free accounts rarely at times; Check builds
+    # the engine and the app for both architectures anyway
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: |
+          brew install shellcheck
+          shellcheck -s bash -x src/zapret.sh zapret.command src/nfqws/run.sh build/utunws.sh build/check-nfqws.sh build/release.sh build/ship.sh build/pack.sh tests/unit.sh tests/engine_filter.sh
+      - name: unit tests
+        run: |
+          tests/unit.sh
+          python3 -m unittest discover -s tests
+      - name: engine — filter of incoming packets
+        run: |
+          xcrun clang -o ft tests/engine_filter.c -lpcap
+          ./ft "$(tests/engine_filter.sh)"
+          xcrun clang -I engine/nfq -o lt tests/engine_ladder.c engine/nfq/ladder.c
+          ./lt
+      - name: fakes — ours, and the engine reads them
+        run: |
+          xcrun swiftc -O build/fakes.swift -o fakes
+          ./fakes selftest
+          ./fakes src/nfqws --check
+          xcrun clang -I engine/nfq -o fk tests/engine_fakes.c engine/nfq/protocol.c engine/nfq/helpers.c engine/nfq/crypto/*.c
+          ./fk src/nfqws/bin/*.bin
+      - name: strategies and deep search options are valid for nfqws
+        run: |
+          build/utunws.sh dist
+          mkdir u && tar -xzf dist/utunws.tar.gz -C u
+          build/check-nfqws.sh u/bin/utunws
+      - name: swift-format
+        # the style is in .swift-format; `xcrun swift-format format -i -r app tests/AppTests.swift` fixes it
+        run: xcrun swift-format lint --strict -r app/Sources app/Widget tests/AppTests.swift
+      - name: app logic tests
+        run: |
+          xcrun swiftc -parse-as-library -swift-version 5 -D TESTING app/Sources/*.swift tests/AppTests.swift -o apptests
+          ./apptests
+      - name: app builds
+        run: build/app.sh dist
+      - name: app screens
+        # every page and the menu panel, light and dark, as the README shows them: a page that fails
+        # to draw stops the check, the pictures are attached to the run to look at
+        run: |
+          for dark in 0 1; do
+            mkdir -p "screens/$dark"
+            ZAPRET_SNAPSHOT="$PWD/screens/$dark" ZAPRET_SCRIPT="$PWD/src/zapret.sh" ZAPRET_DEMO=1 ZAPRET_SNAPSHOT_DARK=$dark \
+              dist/zapret.app/Contents/MacOS/zapret &
+            pid=$!
+            for _ in $(seq 300); do kill -0 $pid 2>/dev/null || break; sleep 1; done
+            if kill $pid 2>/dev/null; then echo "::error::snapshots hung"; exit 1; fi
+            if [ $dark = 1 ]; then suffix=-dark; else suffix=""; fi
+            for f in menu home strategies sites diagnostics settings welcome; do
+              s="screens/$dark/$f$suffix.png"
+              [ -s "$s" ] || { echo "::error::no $s"; exit 1; }
+            done
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screens
+          path: screens
+          if-no-files-found: ignore
+      - name: launchers are executable
+        run: |
+          for f in zapret.command src/zapret.sh src/nfqws/run.sh build/utunws.sh build/check-nfqws.sh build/release.sh build/ship.sh build/pack.sh build/import-windows.py tests/unit.sh tests/engine_filter.sh; do test -x "$f" || { echo "::error::$f is not executable"; exit 1; }; done

@@ -1,0 +1,9 @@
+--filter-udp="@GAME_UDP@"
+--ipset="@GAMEIPSET@"
+--ipset-exclude="@LISTS@/ipset-exclude.txt"
+--ipset-exclude="@LISTS@/ipset-exclude-user.txt"
+--dpi-desync=fake
+--dpi-desync-repeats=10
+--dpi-desync-any-protocol=1
+--dpi-desync-fake-unknown-udp="@BASE@/bin/ACTIVE_GAME_UDP.bin"
+--dpi-desync-cutoff=n2

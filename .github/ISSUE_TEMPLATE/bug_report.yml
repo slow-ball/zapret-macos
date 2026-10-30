@@ -1,0 +1,45 @@
+name: Не работает
+description: Сервис не открывается, тормозит или zapret ведёт себя странно
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Проще всего: в приложении **Проверка → «Сообщить о проблеме»** — отчёт заполнится сам.
+        Перед отправкой: выключить VPN, перезапустить браузер, попробовать «Подобрать стратегию».
+  - type: input
+    id: isp
+    attributes:
+      label: Провайдер и город
+      placeholder: Ростелеком, Москва
+    validations:
+      required: true
+  - type: dropdown
+    id: what
+    attributes:
+      label: Что не работает
+      multiple: true
+      options:
+        - YouTube не открывается
+        - YouTube тормозит / не грузит видео
+        - Discord
+        - Голос в Discord
+        - Telegram
+        - Другой сайт
+        - Игры
+        - Установка / обновление
+        - Приложение
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Что происходит
+      placeholder: Что делали, что ожидали, что получилось
+  - type: textarea
+    id: report
+    attributes:
+      label: Отчёт из приложения (или вывод zapret.sh diag)
+      render: text
+    validations:
+      required: true

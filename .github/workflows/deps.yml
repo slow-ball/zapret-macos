@@ -1,0 +1,56 @@
+name: Dependencies
+run-name: "Dependencies"
+
+# Once a day: anything new in Flowseal's macOS port of nfqws, where our engine started? An issue with the
+# comparison: the engine is a fork, changes are merged by hand.
+# A pull request of the Actions token doesn't start checks itself; workflow_dispatch does.
+
+on:
+  schedule:
+    - cron: "41 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+jobs:
+  deps:
+    runs-on: macos-15-intel
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # $1 branch, $2 title, $3 body; the working tree holds the change
+          propose() {
+            if git ls-remote --exit-code origin "refs/heads/$1" >/dev/null; then
+              echo "уже предложено: $1"; git checkout -q -- .; return
+            fi
+            git checkout -q -b "$1"
+            git commit -qam "$2"
+            git push -q origin "$1"
+            gh pr create --title "$2" --body "$3" --head "$1"
+            gh workflow run check.yml --ref "$1"
+            gh workflow run e2e.yml --ref "$1"
+            git checkout -q main
+          }
+          sha() { curl -fsSL "$1" | shasum -a 256 | cut -d' ' -f1; }
+
+          # Flowseal's macOS port of nfqws: our engine (engine/) started from it and goes its own way.
+          # new commits there are merged by hand: an issue with the comparison, once per commit
+          have=$(cat engine/UPSTREAM)
+          latest=$(gh api repos/Flowseal/zapret-mac-discord-youtube/commits/HEAD -q .sha)
+          if [ "$latest" != "$have" ]; then
+            title="Порт nfqws от Flowseal: ${latest:0:7}"
+            if ! gh issue list --state all --search "in:title \"$title\"" --json number -q '.[0].number' | grep -q .; then
+              gh issue create --title "$title" --body "Новые коммиты у Flowseal: https://github.com/Flowseal/zapret-mac-discord-youtube/compare/$have...$latest
+          Наш движок — форк в engine/: посмотреть изменения, влить нужное, записать $latest в engine/UPSTREAM."
+            fi
+          fi

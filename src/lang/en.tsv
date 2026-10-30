@@ -1,0 +1,263 @@
+# Сообщения скриптов по-английски: русский формат<TAB>английский. Проверка: tests/test_lang.py
+Обновляю приложение: %s → %s	Updating the app: %s → %s
+%sСкачиваю приложение…%s	%sDownloading the app…%s
+Не удалось скачать приложение или контрольная сумма не совпала	Couldn't download the app, or the checksum didn't match
+%sСобираю приложение из исходников (около 20 секунд)…%s	%sBuilding the app from the sources (about 20 seconds)…%s
+Сборка не удалась	The build failed
+Нужны Command Line Tools: выполнить xcode-select --install	Command Line Tools are needed: run xcode-select --install
+приложение zapret установлено и открыто — иконка в строке меню	the zapret app is installed and open — the icon is in the menu bar
+  %s· подходит — дальше не ищу (все стратегии: check --all)%s	  %s· good enough — not looking further (all strategies: check --all)%s
+Ни одна стратегия не прошла все проверки.	No strategy passed all the checks.
+  Можно создать Issue на GitHub и приложить этот вывод и вывод диагностики.	  You can open an issue on GitHub with this output and the diagnostics.
+Лучшая: %s%s%s (%s КБ/с, голос Discord %s)	Best: %s%s%s (%s KB/s, Discord voice %s)
+Применить? [Y/n] 	Apply? [Y/n] 
+zapret не установлен. Запустить zapret.command	zapret isn't installed. Run zapret.command
+Включён VPN — его нужно выключить	A VPN is on — turn it off
+Включён VPN — его нужно выключить, иначе проверка покажет не провайдера, а VPN.	A VPN is on — turn it off, or the check shows the VPN instead of the provider.
+%sПроверка без zapret…%s	%sChecking without zapret…%s
+  открылось %s, голос Discord %s	  opened %s, Discord voice %s
+голос ✓	voice ✓
+голос ✗	voice ✗
+%-36s %s  %5s КБ/с  %s	%-36s %s  %5s KB/s  %s
+Движок nfqws не установлен	The nfqws engine isn't installed
+%sСтратегии проверяются по очереди, интернет на это время может пропадать…%s	%sChecking the strategies one by one, the internet may drop meanwhile…%s
+Не удалось найти активное подключение	Couldn't find the active connection
+Не удалось сменить DNS	Couldn't change the DNS
+DNS для «%s»: 1.1.1.1, 1.0.0.1, 8.8.8.8	DNS for “%s”: 1.1.1.1, 1.0.0.1, 8.8.8.8
+установлен	installed
+не установлен — запустить zapret.command	not installed — run zapret.command
+работает, стратегия: %s	running, strategy: %s
+не запущен	not running
+движок nfqws (%s)	nfqws engine (%s)
+движок nfqws не установлен — перезапустить стратегию	the nfqws engine isn't installed — restart the strategy
+автозапуск включён	start at boot is on
+автозапуск выключен	start at boot is off
+автопочинка включена	self-repair is on
+  %s· автопочинка выключена%s	  %s· self-repair is off%s
+автообновление включено	automatic updates are on
+  %s· автообновление выключено%s	  %s· automatic updates are off%s
+прокси для Telegram не запущен — включить заново	the Telegram proxy isn't running — turn it on again
+Telegram отвечает через прокси (127.0.0.1:%s)	Telegram answers through the proxy (127.0.0.1:%s)
+прокси для Telegram запущен, но Telegram через него не отвечает	the Telegram proxy runs, but Telegram doesn't answer through it
+запущено приложение TG WS Proxy — его лучше закрыть, прокси уже встроен	the TG WS Proxy app is running — better quit it, the proxy is built in
+обрабатываются все сайты	all sites are handled
+умный режим: найдено сайтов %s, своих стратегий %s	smart mode: %s sites found, %s with their own strategy
+обрабатываются YouTube, Discord и свои списки	YouTube, Discord and your lists are handled
+файрвол pf включён	the pf firewall is on
+файрвол pf выключен — перезапустить стратегию	the pf firewall is off — restart the strategy
+трафик заворачивается в nfqws (utun50)	traffic goes to nfqws (utun50)
+правила pf для nfqws не загружены — перезапустить стратегию	the pf rules for nfqws aren't loaded — restart the strategy
+%sСеть%s	%sNetwork%s
+включён VPN — пока он работает, zapret не участвует	a VPN is on — while it runs, zapret isn't involved
+VPN не обнаружен	no VPN
+в системе настроен прокси — трафик может идти мимо zapret	a system proxy is set — traffic may bypass zapret
+системный прокси не настроен	no system proxy
+запущен %s — может конфликтовать с zapret	%s is running — it may conflict with zapret
+есть IPv6 — nfqws обрабатывает и его	there is IPv6 — nfqws handles it too
+есть IPv6 — nfqws его не обрабатывает, сайты открываются по IPv4	there is IPv6 — nfqws doesn't handle it, sites open over IPv4
+DNS не ответил на www.youtube.com	DNS didn't answer for www.youtube.com
+DNS подменяет YouTube (%s) — указать 1.1.1.1 / 8.8.8.8 в настройках сети	DNS fakes YouTube (%s) — set 1.1.1.1 / 8.8.8.8 in the network settings
+DNS отвечает нормально (%s)	DNS answers fine (%s)
+%sДоступность (как в браузере)%s	%sReachability (as in a browser)%s
+голос Discord (UDP, STUN)	Discord voice (UDP, STUN)
+голос Discord (UDP, STUN) — подобрать стратегию	Discord voice (UDP, STUN) — find a strategy
+доступно обновление: %s	an update is available: %s
+последняя версия	up to date
+%sБраузеры%s %s(если YouTube всё равно тормозит — и перезапустить браузер)%s	%sBrowsers%s %s(if YouTube is still slow — and restart the browser)%s
+  · Chrome: выключить «Безопасный DNS» (Настройки → Конфиденциальность → Безопасность)	  · Chrome: turn off “Use secure DNS” (Settings → Privacy and security → Security)
+  · Chrome: выключить QUIC (chrome://flags/#enable-quic → Disabled)	  · Chrome: turn off QUIC (chrome://flags/#enable-quic → Disabled)
+  · Safari: выключить iCloud Private Relay	  · Safari: turn off iCloud Private Relay
+TCP и UDP	TCP and UDP
+папка проекта не найдена (%s) — свои списки не подключены. Запустить zapret.command из новой папки.	the project folder isn't found (%s) — your lists aren't used. Run zapret.command from the new folder.
+все	all
+умный	smart
+по спискам	lists only
+ 15) Прокси для Telegram: %s	 15) Telegram proxy: %s
+  0) Выход	  0) Quit
+вкл	on
+выкл	off
+%s●%s работает: %s	%s●%s running: %s
+%s●%s остановлен	%s●%s stopped
+  Telegram: прокси работает	  Telegram: the proxy works
+  Telegram: подключён через прокси	  Telegram: connected through the proxy
+  Telegram: прокси не отвечает	  Telegram: the proxy doesn't answer
+  сайты: %s · игры: %s · автозапуск: %s · автопочинка: %s · автообновление: %s · приложение: %s	  sites: %s · games: %s · start at boot: %s · self-repair: %s · automatic updates: %s · app: %s
+есть	yes
+нет	no
+  %sWindows-версия%s %s— стратегии Flowseal%s	  %sWindows version%s %s— Flowseal's strategies%s
+  %smacOS%s %s— свои стратегии и найденные глубоким подбором%s	  %smacOS%s %s— our own strategies and the ones deep search found%s
+  %2d) %s %s(сейчас)%s	  %2d) %s %s(now)%s
+Номер: 	Number: 
+  1) Открыть мои списки (list-user.txt, list-exclude-user.txt)	  1) Open my lists (list-user.txt, list-exclude-user.txt)
+  2) Показать найденные сайты	  2) Show the found sites
+  3) Подобрать стратегии для найденных сайтов	  3) Find strategies for the found sites
+  4) Очистить найденные сайты	  4) Clear the found sites
+Открыты list-user.txt и list-exclude-user.txt. После правки — перезапустить стратегию (пункт 1).	list-user.txt and list-exclude-user.txt are open. After editing, restart the strategy (item 1).
+(доступно обновление %s)	(update %s available)
+  1) Запустить / сменить стратегию	  1) Start / change the strategy
+  2) Остановить	  2) Stop
+  3) Подобрать стратегию автоматически	  3) Find a strategy automatically
+  4) Диагностика	  4) Diagnostics
+  5) Автозапуск при загрузке: вкл/выкл	  5) Start at boot: on/off
+  6) Автопочинка (сама меняет стратегию, если YouTube отвалился): вкл/выкл	  6) Self-repair (changes the strategy if YouTube stops working): on/off
+  7) Приложение zapret (иконка в строке меню): установить или обновить	  7) The zapret app (menu bar icon): install or update
+  8) Сайты: все / умный / только YouTube, Discord и свои списки	  8) Sites: all / smart / only YouTube, Discord and your lists
+  9) Списки доменов и найденные сайты	  9) Domain lists and found sites
+ 10) Обновить	 10) Update
+ 11) Вернуть предыдущую версию%s	 11) Go back to the previous version%s
+ 12) Удалить zapret	 12) Remove zapret
+ 13) Игровой фильтр: %s	 13) Game filter: %s
+ 14) Автообновление (раз в сутки): вкл/выкл	 14) Automatic updates (once a day): on/off
+%sСкачиваю движок nfqws (%s)…%s	%sDownloading the nfqws engine (%s)…%s
+Не удалось скачать nfqws	Couldn't download nfqws
+Контрольная сумма nfqws не совпала	The nfqws checksum didn't match
+Не удалось распаковать nfqws	Couldn't unpack nfqws
+nfqws установлен	nfqws installed
+watchdog: прокси для Telegram не работал, запускаю	watchdog: the Telegram proxy wasn't running, starting it
+watchdog: YouTube недоступен (%s)	watchdog: YouTube unreachable (%s)
+«%s» перестала работать, включена «%s»	“%s” stopped working, “%s” is on
+watchdog: рабочая стратегия не найдена	watchdog: no working strategy found
+YouTube недоступен, рабочая стратегия не найдена	YouTube is unreachable, no working strategy found
+правило sudo для приложения	the sudo rule for the app
+фоновая проверка	the background check
+zapret запущен	zapret started
+правила файрвола	the firewall rules
+прокси для Telegram	the Telegram proxy
+всё на месте	everything is in place
+восстановлено: %s	restored: %s
+macOS обновилась — zapret восстановлен	macOS was updated — zapret is restored
+автопочинка включена: проверка каждые 5 минут	self-repair is on: a check every 5 minutes
+автопочинка выключена	self-repair is off
+автообновление включено: проверка раз в сутки	automatic updates are on: a check once a day
+автообновление выключено	automatic updates are off
+Обновлено до %s	Updated to %s
+autoupdate: не удалось	autoupdate: failed
+%s — ни одна стратегия не помогла, попробовать глубокий подбор	%s — no strategy helped, try deep search
+%s — своя стратегия: %s%s%s	%s — its own strategy: %s%s%s
+Перезапускаю zapret со стратегиями для сайтов…	Restarting zapret with the sites' strategies…
+готово	done
+Не похоже на адрес сайта	Doesn't look like a site address
+Не похоже на адрес сайта: %s	Doesn't look like a site address: %s
+%s добавлен в свой список	%s is added to your list
+  %s· без обхода тоже открывается — значит, мешает не провайдер, а что-то ещё%s	  %s· it opens without a bypass too — so it isn't the provider but something else%s
+для %s своя стратегия: %s%s%s	%s has its own strategy: %s%s%s
+%s открывается	%s opens
+%s всё ещё не открывается — попробовать подобрать стратегию (пункт меню 3)	%s still doesn't open — try finding a strategy (menu item 3)
+%s открывается и без обхода — дело не в провайдере	%s opens without a bypass too — it isn't the provider
+%sГлубокий подбор для %s: до %s вариантов, 5–15 минут, интернет на это время может пропадать…%s	%sDeep search for %s: up to %s options, 5–15 minutes, the internet may drop meanwhile…%s
+Глубокий подбор: %s	Deep search: %s
+найдено: %s%s%s (%s) — работает для %s	found: %s%s%s (%s) — works for %s
+ничего не нашлось: провайдер режет %s так, что подмена пакетов не помогает	nothing found: the provider blocks %s in a way packet tricks don't help with
+найденные сайты и стратегии для них очищены	the found sites and their strategies are cleared
+%sНайденные сайты%s %s(умный режим)%s	%sFound sites%s %s(smart mode)%s
+  %sпока ничего%s	  %snothing yet%s
+%sСвои стратегии для сайтов%s	%sSites' own strategies%s
+Включён VPN — его нужно выключить.	A VPN is on — turn it off.
+Новых сайтов для подбора нет	No new sites to look at
+  %s· %s — открывается и без обхода%s	  %s· %s — opens without a bypass too%s
+%s — работает с основной стратегией	%s — works with the main strategy
+%sПодбираю стратегии для %s сайтов, интернет может ненадолго пропадать…%s	%sFinding strategies for %s sites, the internet may drop for a moment…%s
+Не удалось установить движок nfqws	Couldn't install the nfqws engine
+zapret обрабатывает все сайты (кроме исключений)	zapret handles all sites (except the exclusions)
+умный режим: сайт, который дважды не открылся, сам попадает в обработку	smart mode: a site that failed to open twice gets handled by itself
+zapret обрабатывает только YouTube, Discord и свои списки	zapret handles only YouTube, Discord and your lists
+scope: all, smart или lists	scope: all, smart or lists
+zapret установлен в %s	zapret is installed in %s
+  Обход для игр, как Game Filter в Windows-версии: порты 1024–65535 серверов игр и облаков.	  A bypass for games, like Game Filter in the Windows version: ports 1024–65535 of game and cloud servers.
+  1) Выключить   2) TCP   3) UDP   4) TCP и UDP	  1) Off   2) TCP   3) UDP   4) TCP and UDP
+game: off, tcp, udp или all	game: off, tcp, udp or all
+игровой фильтр: %s	game filter: %s
+  %sПриложение можно поставить позже, пункт меню 7.%s	  %sThe app can be installed later, menu item 7.%s
+стратегии «%s» больше нет — включаю «%s»	the “%s” strategy is gone — turning on “%s”
+Нет стратегии «%s»	No “%s” strategy
+start: движок убит системой, ставлю заново	start: the engine was killed by the system, installing it again
+nfqws не принимает стратегию «%s»	nfqws doesn't accept the “%s” strategy
+zapret запущен: %s%s%s	zapret started: %s%s%s
+  %sПерезапустить браузер (Cmd+Q), чтобы сбросились старые соединения.%s	  %sRestart the browser (Cmd+Q) to drop old connections.%s
+Запущен: %s	Started: %s
+zapret не запустился. Подробности — в диагностике.	zapret didn't start. Details are in the diagnostics.
+Не удалось запустить	Couldn't start
+start %s: не запустился	start %s: didn't start
+zapret всё ещё работает	zapret is still running
+zapret остановлен	zapret stopped
+Остановлен	Stopped
+  1) Все сайты, кроме исключений	  1) All sites except the exclusions
+  2) Умный: YouTube, Discord, свои списки и сайты, которые не открылись без обхода	  2) Smart: YouTube, Discord, your lists and sites that didn't open without a bypass
+  3) Только YouTube, Discord и свои списки	  3) Only YouTube, Discord and your lists
+Не удалось запустить прокси	Couldn't start the proxy
+прокси для Telegram работает: 127.0.0.1:%s	the Telegram proxy works: 127.0.0.1:%s
+  Подключить Telegram Desktop — открыть ссылку (или кнопка в приложении):	  To connect Telegram Desktop, open the link (or use the button in the app):
+прокси не запустился, подробности: /var/log/zapret-macos-telegram.log	the proxy didn't start, details: /var/log/zapret-macos-telegram.log
+прокси для Telegram выключен	the Telegram proxy is off
+Прокси для Telegram не запущен	The Telegram proxy isn't running
+Telegram отвечает через прокси	Telegram answers through the proxy
+Telegram не ответил через прокси	Telegram didn't answer through the proxy
+  zapret остановлен: без него провайдер может резать соединения прокси	  zapret is stopped: without it the provider may cut the proxy's connections
+Прокси для Telegram уже включается	The Telegram proxy is already starting
+прокси для Telegram уже работает: 127.0.0.1:%s	the Telegram proxy already works: 127.0.0.1:%s
+Прокси для Telegram не установлен	The Telegram proxy isn't installed
+порт 1443 занят%s — прокси на порту %s	port 1443 is taken%s — the proxy is on port %s
+ приложением TG WS Proxy	 by the TG WS Proxy app
+Перезапускаю zapret…	Restarting zapret…
+Удалить zapret полностью (службы, правила файрвола, %s)? [y/N] 	Remove zapret completely (services, firewall rules, %s)? [y/N] 
+zapret удалён. Папку проекта можно удалить вручную.	zapret is removed. The project folder can be deleted by hand.
+Не похоже на номер версии: %s	Doesn't look like a version number: %s
+Не удалось проверить обновления (GitHub недоступен?)	Couldn't check for updates (is GitHub reachable?)
+Установлена последняя версия (%s)	You have the latest version (%s)
+Возвращаю %s → %s	Going back %s → %s
+Обновляю %s → %s	Updating %s → %s
+Не удалось скачать %s	Couldn't download %s
+update: подпись %s не совпала, обновление отменено	update: the signature of %s didn't match, the update is cancelled
+Подпись обновления %s не совпала — обновление отменено	The signature of update %s didn't match — the update is cancelled
+Не удалось распаковать	Couldn't unpack
+В загрузке не та версия	The download holds another version
+git pull не удался	git pull failed
+Не удалось обновить файлы	Couldn't update the files
+Файлы обновлены	Files updated
+Переустанавливаю %s	Reinstalling %s
+Вернуть можно только предыдущую версию	Only the previous version can be brought back
+движок для текущей сети	the engine for the current network
+Зашифрованный DNS %s для всей системы. Удалить — в zapret или здесь же.	Encrypted DNS %s for the whole system. Remove it in zapret or right here.
+DNS: %s	DNS: %s
+DNS: системный	DNS: the system one
+dns: %s	dns: %s
+Профиль %s открыт в Системных настройках: дважды щёлкнуть по нему и нажать «Установить».	The %s profile is open in System Settings: double-click it and click Install.
+%sПодбираю стратегии для %s сайтов, остальной интернет работает как обычно…%s	%sFinding strategies for %s sites, the rest of the internet works as usual…%s
+%sГлубокий подбор для %s: до %s вариантов, 5–15 минут, остальной интернет работает как обычно…%s	%sDeep search for %s: up to %s options, 5–15 minutes, the rest of the internet works as usual…%s
+провайдер подменяет адрес %s — поставить DNS 1.1.1.1: zapret.sh dns	the provider fakes the address of %s — use DNS 1.1.1.1: zapret.sh dns
+адреса %s нет: опечатка или сайт закрылся	there is no address %s: a typo or the site is gone
+заблокирован сам адрес сервера %s — подмена пакетов тут не поможет	the address of the server %s itself is blocked — packet tricks can't help here
+%s сам не пускает из России — поможет DNS для нейросетей: zapret.sh dns dnsai	%s turns Russia away itself — the DNS for neural networks helps: zapret.sh dns dnsai
+zapret не запустился после сброса — подробности в диагностике	zapret didn't start after the reset — details are in the diagnostics
+zapret сброшен: стратегия «%s», все сайты, игры выключены	zapret is reset: strategy “%s”, all sites, games off
+свежие стратегии без обновления: включены	fresh strategies without an update: on
+свежие стратегии без обновления: выключены	fresh strategies without an update: off
+свежие стратегии: %s	fresh strategies: %s
+свежие стратегии: из релиза	strategies: of the release
+Не удалось скачать свежие стратегии	Couldn't download fresh strategies
+Подпись свежих стратегий не совпала — не ставлю	The signature of the fresh strategies didn't match — not installing them
+В свежих стратегиях недопустимое содержимое — не ставлю	The fresh strategies hold something they may not — not installing them
+свежие стратегии уже стоят: %s	the fresh strategies are already there: %s
+в релизе стратегии не старее — свежие не нужны	the release's strategies are no older — fresh ones aren't needed
+Свежие стратегии %s не запустились — вернул стратегии релиза	The fresh strategies %s didn't start — the release's strategies are back
+сброс соединения	connection reset
+переадресация на заглушку	redirect to a block page
+запросы без ответа	requests left unanswered
+Умный режим подобрал стратегии для сайтов: %s	Smart mode found strategies for sites: %s
+Адаптивная: все сайты открываются с первого приёма	Adaptive: every site opens with the first trick
+  %s%s — приём %s%s	  %s%s — trick %s%s
+адаптивная: приём, на котором остановилось сайтов: %s, — теперь первый	adaptive: the trick %s sites settled on is now the first
+адаптивная: Discord не загружается до конца — пробую другие приёмы	adaptive: Discord doesn't load to the end — trying other tricks
+адаптивная: Discord на приёме %s	adaptive: Discord on trick %s
+Discord снова открывается — адаптивная нашла приём	Discord opens again — the adaptive strategy found a trick
+видео YouTube: QUIC	YouTube video: QUIC
+видео YouTube: TCP	YouTube video: TCP
+адаптивная: %s не загружается до конца — пробую другие приёмы	adaptive: %s doesn't load to the end — trying other tricks
+адаптивная: %s на приёме %s	adaptive: %s on trick %s
+video: tcp или quic	video: tcp or quic
+адаптивная: YouTube не загружается до конца — пробую другие приёмы	adaptive: YouTube doesn't load to the end — trying other tricks
+адаптивная: YouTube на приёме %s	adaptive: YouTube on trick %s
+YouTube снова открывается — адаптивная нашла приём	YouTube opens again — the adaptive strategy found a trick
+адаптивная: новых приёмов: %s — движок опробует их сам	adaptive: new tricks: %s — the engine tries them by itself
+в движке нет прокси для Telegram	the engine has no Telegram proxy
+Предыдущей версии нет	There is no previous version

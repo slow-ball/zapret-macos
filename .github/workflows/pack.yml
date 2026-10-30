@@ -1,0 +1,43 @@
+name: Strategy pack
+run-name: "Strategy pack"
+
+# Fresh strategies between releases (src/lib/pack.sh): after a green Check on main, a pack of the Windows
+# version's strategies, the fakes and the lists (build/pack.sh), signed with the pack key, goes to the
+# release "pack". The Macs take it once a day. No code goes into a pack — only strategies and lists.
+
+on:
+  workflow_run:
+    workflows: [Check]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: macos-15-intel
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - name: build and sign
+        env:
+          PACK_KEY: ${{ secrets.PACK_KEY }}
+        run: |
+          [ -n "$PACK_KEY" ] || { echo "::error::нет секрета PACK_KEY"; exit 1; }
+          umask 077
+          printf '%s\n' "$PACK_KEY" > "$RUNNER_TEMP/pack-key"
+          ZAPRET_PACK_KEY="$RUNNER_TEMP/pack-key" build/pack.sh out
+          rm -f "$RUNNER_TEMP/pack-key"
+      - name: publish
+        run: |
+          gh release view pack >/dev/null 2>&1 ||
+            gh release create pack --prerelease --latest=false --title "Свежие стратегии" \
+              --notes "Свежие стратегии, фейки и списки между релизами. zapret забирает их сам, ставить вручную не нужно."
+          gh release upload pack out/pack.tar.gz out/pack.tar.gz.sig --clobber

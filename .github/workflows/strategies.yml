@@ -1,0 +1,114 @@
+name: Import strategies
+run-name: "Import strategies"
+
+# Once a day: a new Windows version of Flowseal/zapret-discord-youtube? Then its strategies and lists come
+# over (build/import-windows.py, the fakes by build/fakes.swift), are checked by a built utunws, and a pull
+# request opens. When Check and E2E pass on it and the lists bring no domains of new sites (only new
+# addresses of those already there), it merges itself and the strategy pack follows — the Macs get them
+# without a release. Otherwise the pull request waits for a review.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  import:
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - name: newer Windows version?
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh release view -R Flowseal/zapret-discord-youtube --json tagName -q .tagName)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ "$latest" = "$(cat src/nfqws/windows-version)" ]; then
+            echo "Стратегии уже из $latest"
+          elif git ls-remote --exit-code origin "refs/heads/strategies-$latest" >/dev/null; then
+            echo "Pull request для $latest уже есть"
+          else
+            echo "new=1" >> "$GITHUB_OUTPUT"
+          fi
+      - name: import
+        if: steps.v.outputs.new == '1'
+        run: |
+          curl -fsSL -o w.tar.gz "https://github.com/Flowseal/zapret-discord-youtube/archive/refs/tags/${{ steps.v.outputs.latest }}.tar.gz"
+          mkdir w && tar -xzf w.tar.gz -C w --strip-components=1
+          build/import-windows.py w src/nfqws --lists src
+          rm -rf w w.tar.gz
+          # the fakes the new strategies name, ours
+          xcrun swift build/fakes.swift src/nfqws
+      - name: check
+        if: steps.v.outputs.new == '1'
+        run: |
+          build/utunws.sh dist
+          mkdir u && tar -xzf dist/utunws.tar.gz -C u
+          build/check-nfqws.sh u/bin/utunws | tee check.txt
+          rm -rf u dist
+      - name: pull request
+        if: steps.v.outputs.new == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=${{ steps.v.outputs.latest }}
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "strategies-$v"
+          git add -A src
+          git commit -m "Стратегии из Windows-версии $v"
+          git push origin "strategies-$v"
+          {
+            echo "Стратегии nfqws и списки из [Windows-версии $v](https://github.com/Flowseal/zapret-discord-youtube/releases/tag/$v)."
+            echo
+            echo "Перед слиянием посмотреть новые домены в списках и имена файлов в src/nfqws/bin."
+            echo
+            echo '```'
+            git diff --stat HEAD~1
+            echo '```'
+            echo
+            echo "Проверка utunws:"
+            echo '```'
+            cat check.txt
+            echo '```'
+          } > body.md
+          gh pr create --title "Стратегии из Windows-версии $v" --body-file body.md
+          # a pull request from the Actions token starts no checks by itself; a dispatch does
+          gh workflow run check.yml --ref "strategies-$v"
+          gh workflow run e2e.yml --ref "strategies-$v"
+      - name: merge by itself
+        if: steps.v.outputs.new == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=${{ steps.v.outputs.latest }}
+          # sites the lists didn't have: base domains (the last two labels) new to the project
+          base() { grep -hvE '^[[:space:]]*(#|$)' "$@" | tr -d '\r^' | awk -F. 'NF >= 2 { print $(NF-1) "." $NF }' | sort -u; }
+          git show HEAD~1:src/list-general.txt HEAD~1:src/list-google.txt HEAD~1:src/list-exclude.txt > old.txt
+          fresh=$(comm -13 <(base old.txt) <(base src/list-general.txt src/list-google.txt src/list-exclude.txt))
+          if [ -n "$fresh" ]; then
+            printf 'Новые сайты в списках — слить после просмотра:\n%s\n' "$fresh" | gh pr comment "strategies-$v" --body-file -
+            exit 0
+          fi
+          # both checks of this branch, at most an hour
+          sha=$(git rev-parse HEAD)
+          for _ in $(seq 120); do
+            sleep 30
+            st=$(gh run list --commit "$sha" --json workflowName,status,conclusion \
+              -q '[.[] | select(.workflowName == "Check" or .workflowName == "E2E")] | map(.status + "/" + .conclusion) | join(" ")')
+            case "$st" in
+              *failure* | *cancelled*) gh pr comment "strategies-$v" --body "Проверки не прошли — не сливаю: $st"; exit 0 ;;
+              "completed/success completed/success") break ;;
+            esac
+          done
+          [ "$st" = "completed/success completed/success" ] || { gh pr comment "strategies-$v" --body "Проверки не закончились за час — не сливаю"; exit 0; }
+          gh pr merge "strategies-$v" --squash --delete-branch
+          # a merge by the Actions token starts nothing on main by itself
+          gh workflow run check.yml --ref main
+          gh workflow run pack.yml --ref main
