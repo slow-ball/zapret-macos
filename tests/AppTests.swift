@@ -42,7 +42,7 @@ struct AppTests {
         let old = try? JSONDecoder().decode(Status.self, from: Data(#"{"version":"2.2.1","running":true}"#.utf8))
         eq("старый скрипт: версия", old?.version, "2.2.1")
         eq("старый скрипт: предыдущей нет", old?.previous, "")
-        eq("старый скрипт: режим по умолчанию", old?.scope, "all")
+        eq("старый скрипт: режим по умолчанию", old?.scope, "smart")
         // one key of a wrong type doesn't throw the whole status away
         let odd = try? JSONDecoder().decode(Status.self, from: Data(#"{"version":"1.1.0","found":"много","running":true}"#.utf8))
         eq("кривой ключ: остальное на месте", odd?.running, true)
