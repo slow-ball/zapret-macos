@@ -347,14 +347,15 @@ let dcAddresses: [Int: String] = [1: "149.154.175.50", 2: "149.154.167.51", 3: "
 
 /// opens a TCP connection, TLS with the name `sni` if given; the handler gets it ready, or nil after `wait` seconds
 func connect(_ host: String, _ port: UInt16, sni: String?, wait: Double = 8, _ done: @escaping (NWConnection?) -> Void) {
-    let params: NWParameters
+    var tls: NWProtocolTLS.Options?
     if let sni {
-        let tls = NWProtocolTLS.Options()
-        sec_protocol_options_set_tls_server_name(tls.securityProtocolOptions, sni)
-        params = NWParameters(tls: tls)
-    } else {
-        params = .tcp
+        tls = NWProtocolTLS.Options()
+        sec_protocol_options_set_tls_server_name(tls!.securityProtocolOptions, sni)
+        // TLS 1.2: the hello of TLS 1.3 on macOS 26 carries a post-quantum key and takes two packets, and some
+        // providers silently drop such handshakes to Cloudflare. Telegram's own encryption is inside anyway
+        sec_protocol_options_set_max_tls_protocol_version(tls!.securityProtocolOptions, .TLSv12)
     }
+    let params = NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
     let conn = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!, using: params)
     var finished = false
     let finish: (NWConnection?) -> Void = { c in

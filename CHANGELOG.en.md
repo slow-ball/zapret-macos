@@ -1,5 +1,11 @@
 # Changes
 
+## 1.0.1
+
+- **Telegram works again where the provider closed its addresses.** A recent macOS sends a big TLS hello, and
+  some providers break such connections to Cloudflare — the proxy couldn't reach the relays. Now it talks to
+  them in a way that gets through; Telegram's own encryption inside is unchanged
+
 ## 1.0.0
 
 The first release of zapret for macOS as an app of its own, with its own engine.
