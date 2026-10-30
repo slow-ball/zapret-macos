@@ -19,10 +19,10 @@ RELEASE_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJKLGLi13f9yB7KucbwVHTl0yc84E4b
 # fresh strategies between releases (src/lib/pack.sh) are signed by CI with this key, in a namespace of their own
 PACK_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM/apOaxajTADEsTfA4eGS21U/aVI0BmL7uc3UQbtWP+"
 RELEASE_KEY_BACKUP="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBANscZ3X47PUq7WCPh/r4aSqI2ouJTC49NI+oKPGSNQ"
-NQ_TAG=utunws-21               # the engine's release (build/utunws.sh, workflow Build)
-NQ_SHA256=bf26638eeacc64d210e8d8f1f9f63fff671eed8f5155561565fb614abb2f77b1
-APPTAG=utunws-21               # the release with zapret-app.zip (workflow Build); empty: the app is built from source
-APPSHA256=08f623ab7bb3472504794427f7cf30ac129521f98c94688d608b9b16d6f66f08
+NQ_TAG=utunws-1               # the engine's release (build/utunws.sh, workflow Build)
+NQ_SHA256=99cdb6e343d700571baa13d7d34530f8b2837b119686efa0fb6065651e8258c7
+APPTAG=utunws-1               # the release with zapret-app.zip (workflow Build); empty: the app is built from source
+APPSHA256=9f14e93bb2403c1665a4877f3af2d49371c1574d17de433abd774cc811ceaa2b
 TG_BIN=$RT/nfqws/bin/zapret-tg   # our Telegram proxy (engine/tg), installed with the engine
 TG_LABEL=com.zapret-macos.telegram
 TG_PLIST=/Library/LaunchDaemons/$TG_LABEL.plist
