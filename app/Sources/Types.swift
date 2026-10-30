@@ -8,7 +8,7 @@ struct Status: Decodable, Equatable {
     var running = false
     var strategy = ""
     var engine = "nfqws"
-    var scope = "smart"
+    var scope = "all"
     var game = "off"
     var autostart = false
     var autofix = false

@@ -66,7 +66,7 @@ check "умный: ipset-none" has "$(cat "$c")" "ipset-none.txt"
 check "умный: известные заблокированные" has "$(cat "$c")" 'list-blocked.txt'
 check "умный: со второго сбоя" has "$(cat "$c")" "--hostlist-auto-fail-threshold=2"
 rm -f "$RT/scope"
-check "по умолчанию — умный" eq "$(scope)" smart
+check "по умолчанию — все сайты" eq "$(scope)" all
 # the list of blocked sites: names only, a zone without its dot, a short or broken list leaves the last one
 curl() { local o; while [ $# -gt 0 ]; do [ "$1" = -o ] && o=$2; shift; done; cat "$TMP/blocked-src" > "$o"; }
 { printf '.ua\nExample.COM\nbad name\n# comment\n'; for i in $(seq 250); do echo "site$i.example"; done; } > "$TMP/blocked-src"

@@ -361,7 +361,7 @@ EN = {
 "Новые стратегии Windows-версии без обновления zapret — подписанный пакет, только стратегии и списки": "New strategies of the Windows version without updating zapret — a signed pack, only strategies and lists",
 "Видео YouTube": "YouTube video",
 "Заблокированные и те, что не открылись — остальное как есть": "Blocked ones and those that didn't open — the rest as it is",
-"Всё, кроме исключений. Загрузки на зарубежные сайты могут зависать": "Everything except exclusions. Uploads to foreign sites may freeze",
+"Всё, кроме исключений": "Everything except exclusions",
 "Включить умный режим": "Turn on smart mode",
 "Включён умный режим": "Smart mode is on",
 "Telegram не отвечает": "Telegram doesn't answer",

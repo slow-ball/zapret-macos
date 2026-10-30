@@ -272,6 +272,6 @@ Telegram не отвечает через прокси — подробност�
 загрузки на зарубежные сайты зависают	uploads to foreign sites freeze
 watchdog: загрузки на зарубежные сайты зависают в режиме «Все сайты»	watchdog: uploads to foreign sites freeze in the All sites mode
 Загрузки на некоторые сайты зависают в режиме «Все сайты» — умный режим это исправит	Uploads to some sites freeze in the All sites mode — the smart mode fixes that
-  1) Умный: YouTube, Discord, свои списки, заблокированные сайты и те, что не открылись без обхода	  1) Smart: YouTube, Discord, your lists, blocked sites and those that didn't open without a bypass
-  2) Все сайты, кроме исключений (загрузки на зарубежные сайты могут зависать)	  2) All sites except exclusions (uploads to foreign sites may freeze)
+  2) Умный: YouTube, Discord, свои списки, заблокированные сайты и те, что не открылись без обхода	  2) Smart: YouTube, Discord, your lists, blocked sites and those that didn't open without a bypass
+  1) Все сайты, кроме исключений	  1) All sites except exclusions
 умный режим: заблокированные сайты и те, что не открылись, — с обходом, остальные как есть	smart mode: blocked sites and those that didn't open get a bypass, the rest as it is

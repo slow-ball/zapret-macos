@@ -37,9 +37,9 @@ One button turns it on — in the menu bar, in a widget or <kbd>⌃⌥Z</kbd>. N
   Every group of YouTube's video servers has a trick of its own.
 - **It learns by itself.** Once a day the trick most sites chose moves to the start of the ladder, and the
   bad ones give way to new ones the generator makes from the best.
-- **It touches only what is blocked.** YouTube, Discord, Telegram, your sites, the sites known to be blocked
-  and the ones that didn't open without a bypass get it — the engine finds those itself. The rest of the
-  internet, banks and government services go as they are, nothing breaks.
+- **It finds blocked sites by itself.** In smart mode only YouTube, Discord, Telegram, your sites, the sites
+  known to be blocked and the ones that didn't open without a bypass get it; banks, government services and the
+  rest of the internet go as they are.
 - **Its own Telegram proxy.** Built in, one button: directly through Telegram's web servers, and where those
   are closed — through the community's relays on Cloudflare.
 - **DNS for neural networks** — for services that are closed for Russia by themselves. Only turned on by hand.

@@ -64,7 +64,7 @@ enum Snapshot {
 private func demo(_ model: AppModel) {
     model.demo = true
     var s = model.status
-    s.installed = true; s.running = true; s.strategy = Strategy.adaptive.name; s.scope = "smart"
+    s.installed = true; s.running = true; s.strategy = Strategy.adaptive.name; s.scope = "all"
     s.game = "off"; s.autostart = true; s.autofix = true; s.autoupdate = true; s.vpn = false; s.found = 0
     s.telegram = true; s.telegramRunning = true; s.telegramConnected = true; s.telegramLink = "tg://proxy?server=127.0.0.1&port=1443&secret=dd00"
     s.flowsealTelegram = false; s.ladder = 3; s.previous = ""
