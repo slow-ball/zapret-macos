@@ -54,6 +54,7 @@ telegram_repair()
 	telegram_test >/dev/null 2>&1 && return 0
 	log "$(msg "watchdog: прокси не достаёт до Telegram — обновляю посредников и перезапускаю")"
 	telegram_relays
+	if running; then write_lists; nfqws_reload >/dev/null; fi
 	launchctl kickstart -k system/$TG_LABEL >/dev/null 2>&1
 	sleep 3
 	telegram_test >/dev/null 2>&1 && return 0
@@ -109,6 +110,8 @@ cmd_telegram()
 				return 0
 			fi
 			telegram_install || die "Прокси для Telegram не установлен"
+			# the engine leaves the relays alone (write_lists): a fresh list of them is read again
+			if running; then write_lists; nfqws_reload >/dev/null; fi
 			# one secret for good: Telegram keeps the proxy it was given. made from this Mac's own id, so a
 			# reinstall gives the same one and the proxy Telegram has keeps working
 			[ -s "$d/secret" ] || telegram_secret > "$d/secret"
@@ -174,6 +177,7 @@ EOF
 			telegram_on || die "Прокси для Telegram выключен"
 			launchctl print system/$TG_LABEL >/dev/null 2>&1 || { cmd_telegram on; return; }
 			telegram_relays
+			if running; then write_lists; nfqws_reload >/dev/null; fi
 			launchctl kickstart -k system/$TG_LABEL >/dev/null 2>&1
 			for i in $(seq 50); do nc -z 127.0.0.1 "$(telegram_port)" 2>/dev/null && break; sleep 0.2; done
 			if telegram_test >/dev/null 2>&1; then

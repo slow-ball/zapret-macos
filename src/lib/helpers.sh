@@ -221,6 +221,9 @@ write_lists()
 	mkdir -p "$l"
 	local f
 	for f in list-general.txt list-google.txt list-exclude.txt ipset-exclude.txt; do cp "$(list_file $f)" "$l/$f"; done
+	# the Telegram proxy's relays on Cloudflare aren't blocked: a trick on them only hides their name, and the
+	# provider freezes a connection to foreign hosting it can't name after its first ~16 KB
+	[ -x "$TG_BIN" ] && "$TG_BIN" relays >> "$l/list-exclude.txt" 2>/dev/null
 	user_cat "$PROJECT/lists/list-user.txt" > "$l/list-general-user.txt"
 	user_cat "$PROJECT/lists/list-exclude-user.txt" > "$l/list-exclude-user.txt"
 	: > "$l/ipset-exclude-user.txt"

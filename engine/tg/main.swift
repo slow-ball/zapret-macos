@@ -12,6 +12,7 @@
 //   zapret-tg check <host> <port> <secret> [dc]     a handshake like Telegram Desktop's and the first request of
 //                                                   authorization through the proxy: OK if Telegram answered
 //   zapret-tg paths [dc]                            every way to Telegram, which of them answer
+//   zapret-tg relays                                the relays' domains, a line each (zapret leaves them alone)
 //   zapret-tg stun                                  a STUN request like Discord voice's: OK if it is answered
 
 import CommonCrypto
@@ -343,6 +344,9 @@ var relays: [String] = {
 var goodRelay: [Int: String] = [:]
 /// relays that didn't answer lately: tried after the others for five minutes
 var relayDown: [String: Date] = [:]
+/// ZAPRET_TG_VERBOSE=1: every session in the log, not only the ones Telegram didn't answer
+let verbose = ProcessInfo.processInfo.environment["ZAPRET_TG_VERBOSE"] == "1"
+
 /// direct ways to Telegram didn't answer: for ten minutes the relays go first, no waiting on what is blocked
 var directDown: Date?
 
@@ -473,6 +477,14 @@ final class Session {
     let secret: [UInt8]
     var upstream: Upstream?
     var closed = false
+    /// the way it went (a relay, "direct", "dc") and how much went each way: a relay that takes the connection
+    /// and passes nothing back is found by this
+    var via = ""
+    var relay: String?
+    var dc = 0
+    var opened = Date()
+    var up = 0
+    var down = 0
 
     init(client: NWConnection, secret: [UInt8]) {
         self.client = client
@@ -488,6 +500,7 @@ final class Session {
                 return close()
             }
             let (relayInit, ciphers) = session(for: hello, secret: secret)
+            dc = hello.dc
             reach(hello) { [self] up, ws in
                 guard let up else {
                     log("DC\(hello.dc)\(hello.media ? " media" : ""): Telegram unreachable")
@@ -496,12 +509,14 @@ final class Session {
                 }
                 State.reached()
                 upstream = up
+                opened = Date()
                 up.send(relayInit)
                 let splitter = ws ? Splitter(tag: hello.tag) : nil
                 pumpUp(ciphers, splitter)
                 up.receive { [self] data in
                     guard let data else { return close() }
                     if data.isEmpty { return }
+                    down += data.count
                     send(ciphers.toClient.update(ciphers.fromTelegram.update(data)))
                 }
             }
@@ -526,8 +541,9 @@ final class Session {
             if !direct.isEmpty {
                 let d = direct.removeFirst()
                 // where these addresses are blocked they don't answer at all: four seconds are enough
-                return openWebSocket(d, at: wsAddress, wait: 4) { ws in
+                return openWebSocket(d, at: wsAddress, wait: 4) { [self] ws in
                     if let ws {
+                        via = "direct"
                         if directDown != nil {
                             directDown = nil
                             State.save()
@@ -546,8 +562,10 @@ final class Session {
                 let r = viaRelay.removeFirst()
                 triedRelays += 1
                 // a relay that works answers within a second or two
-                return openWebSocket("kws\(hello.dc).\(r)", wait: 4) { ws in
+                return openWebSocket("kws\(hello.dc).\(r)", wait: 4) { [self] ws in
                     if let ws {
+                        via = r
+                        relay = r
                         if goodRelay[hello.dc] != r {
                             goodRelay[hello.dc] = r
                             State.save()
@@ -561,7 +579,10 @@ final class Session {
                 }
             }
             guard let ip = dcAddresses[hello.dc] else { return done(nil, false) }
-            connect(ip, 443, sni: nil) { c in done(c.map { TCPUpstream(conn: $0) }, false) }
+            connect(ip, 443, sni: nil) { [self] c in
+                via = "dc"
+                done(c.map { TCPUpstream(conn: $0) }, false)
+            }
         }
         next()
     }
@@ -569,6 +590,7 @@ final class Session {
     func pumpUp(_ ciphers: Ciphers, _ splitter: Splitter?) {
         client.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [self] data, _, done, error in
             if let data, !data.isEmpty, let up = upstream {
+                self.up += data.count
                 let plain = ciphers.fromClient.update(Array(data))
                 let out = ciphers.toTelegram.update(plain)
                 if let splitter {
@@ -600,6 +622,21 @@ final class Session {
     func close() {
         guard !closed else { return }
         closed = true
+        let secs = Int(Date().timeIntervalSince(opened))
+        if upstream != nil, up > 0, down == 0, secs >= 3 {
+            // Telegram never answered: a relay that takes connections and passes nothing is set aside, the next
+            // connection goes another way
+            log("DC\(dc) via \(via): no answer from Telegram in \(secs) s (sent \(up) B)")
+            if let relay {
+                relayDown[relay] = Date()
+                if goodRelay[dc] == relay {
+                    goodRelay[dc] = nil
+                    State.save()
+                }
+            }
+        } else if verbose, upstream != nil {
+            log("DC\(dc) via \(via): \(secs) s, sent \(up) B, got \(down) B")
+        }
         upstream?.close()
         client.cancel()
         sessions.removeValue(forKey: ObjectIdentifier(self))
@@ -772,6 +809,8 @@ case ("serve", 4), ("serve", 5):
     }
     if args.count == 5 { State.file = args[4] }
     serve(port: port, secret: secret)
+case ("relays", 2):
+    for r in relays { print(r) }
 case ("paths", 2), ("paths", 3):
     paths(dc: args.count == 3 ? Int(args[2]) ?? 2 : 2)
 case ("stun", 2):
@@ -783,6 +822,6 @@ case ("check", 5), ("check", 6):
     }
     check(host: args[2], port: port, secret: secret, dc: args.count == 6 ? Int(args[5]) ?? 2 : 2)
 default:
-    print("zapret-tg serve <port> <secret: 32 hex> [state]\nzapret-tg check <host> <port> <secret> [dc]\nzapret-tg paths [dc]\nzapret-tg stun")
+    print("zapret-tg serve <port> <secret: 32 hex> [state]\nzapret-tg check <host> <port> <secret> [dc]\nzapret-tg paths [dc]\nzapret-tg relays\nzapret-tg stun")
     exit(2)
 }

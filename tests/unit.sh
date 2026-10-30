@@ -195,6 +195,13 @@ check "Telegram: старый сбой — не считается" telegram_rea
 rm -f "$TG_STATE"
 check "секрет прокси: 32 hex" eval '[[ $(telegram_secret) =~ ^[0-9a-f]{32}$ ]]'
 check "секрет прокси: тот же после переустановки" eq "$(telegram_secret)" "$(telegram_secret)"
+# the relays of the Telegram proxy are left alone by the engine: they get into the exclusions of the run
+mkdir -p "$(dirname "$TG_BIN")"
+printf '#!/bin/sh\n[ "$1" = relays ] && echo relay.example.co.uk\n' > "$TG_BIN"; chmod +x "$TG_BIN"
+write_lists
+check "посредники Telegram — в исключениях движка" eval 'grep -qx relay.example.co.uk "$RT/lists/list-exclude.txt"'
+check "исключения проекта — на месте" eval '[ "$(grep -c . "$RT/lists/list-exclude.txt")" -gt 1 ]'
+rm -f "$TG_BIN"
 # the sites used most, for the watchdog
 now=$(date +%s)
 printf 'a.com 5 %s\nb.com 50 %s\nyoutube.com 900 %s\nold.com 999 %s\ndiscordapp.com 70 %s\nsn-ab.googlevideo.com 80 %s\n' "$now" "$now" "$now" $((now - 300000)) "$now" "$now" > "$LADDER_SEEN"
