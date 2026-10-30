@@ -193,6 +193,8 @@ check "Telegram: успех после сбоя — отвечает" telegram_r
 printf 'ok %s\nfail %s\ngood 2 relay.co.uk\n' $((now - 900)) $((now - 600)) > "$TG_STATE"
 check "Telegram: старый сбой — не считается" telegram_reachable
 rm -f "$TG_STATE"
+check "секрет прокси: 32 hex" eval '[[ $(telegram_secret) =~ ^[0-9a-f]{32}$ ]]'
+check "секрет прокси: тот же после переустановки" eq "$(telegram_secret)" "$(telegram_secret)"
 # the sites used most, for the watchdog
 now=$(date +%s)
 printf 'a.com 5 %s\nb.com 50 %s\nyoutube.com 900 %s\nold.com 999 %s\ndiscordapp.com 70 %s\nsn-ab.googlevideo.com 80 %s\n' "$now" "$now" "$now" $((now - 300000)) "$now" "$now" > "$LADDER_SEEN"
